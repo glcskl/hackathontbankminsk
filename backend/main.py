@@ -7,7 +7,7 @@ from datetime import date, datetime
 import os
 
 from database import get_db, init_db
-from models import Recipe, Ingredient, Step, Review, MenuPlan
+from models import Recipe, Ingredient, Step, Review, MenuPlan, MenuPlanAdditional, UserIngredient
 from schemas import (
     RecipeResponse,
     RecipeListItem,
@@ -16,6 +16,8 @@ from schemas import (
     ReviewResponse,
     MenuPlanCreate,
     MenuPlanResponse,
+    UserIngredientCreate,
+    UserIngredientResponse,
 )
 
 app = FastAPI(
@@ -231,7 +233,8 @@ async def get_menu_plans(
             "breakfast_recipe": None,
             "lunch_recipe": None,
             "dinner_recipe": None,
-            "extra_recipe": None
+            "extra_recipe": None,
+            "additional_recipes": []
         }
         
         # Загружаем рецепты если они есть
@@ -295,6 +298,24 @@ async def get_menu_plans(
                 rating=float(avg_rating) if avg_rating else None
             )
         
+        # Загружаем дополнительные рецепты
+        additional_recipes = []
+        for additional in sorted(plan.additional_recipes, key=lambda x: x.order):
+            avg_rating = db.query(func.avg(Review.rating)).filter(
+                Review.recipe_id == additional.recipe.id
+            ).scalar()
+            additional_recipes.append(RecipeListItem(
+                id=additional.recipe.id,
+                title=additional.recipe.title,
+                category=additional.recipe.category,
+                cook_time=additional.recipe.cook_time,
+                servings=additional.recipe.servings,
+                image=additional.recipe.image,
+                calories_per_serving=additional.recipe.calories_per_serving,
+                rating=float(avg_rating) if avg_rating else None
+            ))
+        plan_dict["additional_recipes"] = additional_recipes
+        
         result.append(MenuPlanResponse(**plan_dict))
     
     return result
@@ -313,6 +334,8 @@ async def save_menu_plan(
         menu_plan.dinner_recipe_id,
         menu_plan.extra_recipe_id
     ]
+    if menu_plan.additional_recipe_ids:
+        recipe_ids.extend(menu_plan.additional_recipe_ids)
     
     for recipe_id in recipe_ids:
         if recipe_id:
@@ -336,6 +359,22 @@ async def save_menu_plan(
         existing_plan.dinner_recipe_id = menu_plan.dinner_recipe_id
         existing_plan.extra_recipe_id = menu_plan.extra_recipe_id
         existing_plan.updated_at = datetime.utcnow()
+        
+        # Удаляем старые дополнительные рецепты
+        db.query(MenuPlanAdditional).filter(
+            MenuPlanAdditional.menu_plan_id == existing_plan.id
+        ).delete()
+        
+        # Добавляем новые дополнительные рецепты
+        if menu_plan.additional_recipe_ids:
+            for order, recipe_id in enumerate(menu_plan.additional_recipe_ids):
+                additional = MenuPlanAdditional(
+                    menu_plan_id=existing_plan.id,
+                    recipe_id=recipe_id,
+                    order=order
+                )
+                db.add(additional)
+        
         db.commit()
         db.refresh(existing_plan)
         plan = existing_plan
@@ -350,6 +389,18 @@ async def save_menu_plan(
             extra_recipe_id=menu_plan.extra_recipe_id
         )
         db.add(new_plan)
+        db.flush()  # Получаем ID нового плана
+        
+        # Добавляем дополнительные рецепты
+        if menu_plan.additional_recipe_ids:
+            for order, recipe_id in enumerate(menu_plan.additional_recipe_ids):
+                additional = MenuPlanAdditional(
+                    menu_plan_id=new_plan.id,
+                    recipe_id=recipe_id,
+                    order=order
+                )
+                db.add(additional)
+        
         db.commit()
         db.refresh(new_plan)
         plan = new_plan
@@ -366,7 +417,8 @@ async def save_menu_plan(
         "breakfast_recipe": None,
         "lunch_recipe": None,
         "dinner_recipe": None,
-        "extra_recipe": None
+        "extra_recipe": None,
+        "additional_recipes": []
     }
     
     # Загружаем рецепты
@@ -430,6 +482,24 @@ async def save_menu_plan(
             rating=float(avg_rating) if avg_rating else None
         )
     
+    # Загружаем дополнительные рецепты
+    additional_recipes = []
+    for additional in sorted(plan.additional_recipes, key=lambda x: x.order):
+        avg_rating = db.query(func.avg(Review.rating)).filter(
+            Review.recipe_id == additional.recipe.id
+        ).scalar()
+        additional_recipes.append(RecipeListItem(
+            id=additional.recipe.id,
+            title=additional.recipe.title,
+            category=additional.recipe.category,
+            cook_time=additional.recipe.cook_time,
+            servings=additional.recipe.servings,
+            image=additional.recipe.image,
+            calories_per_serving=additional.recipe.calories_per_serving,
+            rating=float(avg_rating) if avg_rating else None
+        ))
+    plan_dict["additional_recipes"] = additional_recipes
+    
     return MenuPlanResponse(**plan_dict)
 
 
@@ -444,6 +514,118 @@ async def delete_menu_plan(plan_date: date, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "Menu plan deleted successfully"}
+
+
+# ========== UserIngredient Endpoints ==========
+
+@app.get("/api/user-ingredients", response_model=List[UserIngredientResponse])
+async def get_user_ingredients(
+    user_id: Optional[str] = Query("default", description="ID пользователя"),
+    db: Session = Depends(get_db)
+):
+    """Получить ингредиенты пользователя"""
+    ingredients = db.query(UserIngredient).filter(
+        UserIngredient.user_id == user_id
+    ).all()
+    return ingredients
+
+
+@app.post("/api/user-ingredients", response_model=UserIngredientResponse)
+async def save_user_ingredient(
+    ingredient: UserIngredientCreate,
+    db: Session = Depends(get_db)
+):
+    """Создать или обновить ингредиент пользователя"""
+    user_id = ingredient.user_id or "default"
+    
+    # Ищем существующий ингредиент
+    existing = db.query(UserIngredient).filter(
+        UserIngredient.user_id == user_id,
+        UserIngredient.name == ingredient.name
+    ).first()
+    
+    if existing:
+        # Обновляем существующий
+        existing.quantity = ingredient.quantity
+        existing.price = ingredient.price
+        existing.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(existing)
+        return existing
+    else:
+        # Создаем новый
+        new_ingredient = UserIngredient(
+            user_id=user_id,
+            name=ingredient.name,
+            quantity=ingredient.quantity,
+            price=ingredient.price
+        )
+        db.add(new_ingredient)
+        db.commit()
+        db.refresh(new_ingredient)
+        return new_ingredient
+
+
+@app.post("/api/user-ingredients/batch", response_model=List[UserIngredientResponse])
+async def save_user_ingredients_batch(
+    ingredients: List[UserIngredientCreate],
+    user_id: Optional[str] = Query("default", description="ID пользователя"),
+    db: Session = Depends(get_db)
+):
+    """Сохранить несколько ингредиентов пользователя за раз"""
+    result = []
+    for ingredient in ingredients:
+        current_user_id = ingredient.user_id or user_id
+        
+        # Ищем существующий ингредиент
+        existing = db.query(UserIngredient).filter(
+            UserIngredient.user_id == current_user_id,
+            UserIngredient.name == ingredient.name
+        ).first()
+        
+        if existing:
+            # Обновляем существующий
+            existing.quantity = ingredient.quantity
+            existing.price = ingredient.price
+            existing.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(existing)
+            result.append(existing)
+        else:
+            # Создаем новый
+            new_ingredient = UserIngredient(
+                user_id=current_user_id,
+                name=ingredient.name,
+                quantity=ingredient.quantity,
+                price=ingredient.price
+            )
+            db.add(new_ingredient)
+            db.commit()
+            db.refresh(new_ingredient)
+            result.append(new_ingredient)
+    
+    return result
+
+
+@app.delete("/api/user-ingredients/{ingredient_name}")
+async def delete_user_ingredient(
+    ingredient_name: str,
+    user_id: Optional[str] = Query("default", description="ID пользователя"),
+    db: Session = Depends(get_db)
+):
+    """Удалить ингредиент пользователя"""
+    ingredient = db.query(UserIngredient).filter(
+        UserIngredient.user_id == user_id,
+        UserIngredient.name == ingredient_name
+    ).first()
+    
+    if not ingredient:
+        raise HTTPException(status_code=404, detail="User ingredient not found")
+    
+    db.delete(ingredient)
+    db.commit()
+    
+    return {"message": "User ingredient deleted successfully"}
 
 
 if __name__ == "__main__":

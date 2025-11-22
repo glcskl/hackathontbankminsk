@@ -81,10 +81,36 @@ export default function App() {
     loadRecipes();
   }, [activeCategory, searchQuery]);
 
-  // Загрузка меню планов при монтировании
+  // Загрузка меню планов при монтировании и при переключении на вкладку меню
   useEffect(() => {
     loadMenuPlans();
   }, []);
+
+  // Перезагружаем меню планы при открытии вкладки меню
+  useEffect(() => {
+    if (activeTab === 'menu') {
+      loadMenuPlans();
+    }
+  }, [activeTab]);
+
+  // Загрузка ингредиентов пользователя при монтировании
+  useEffect(() => {
+    loadUserIngredients();
+  }, []);
+
+  const loadUserIngredients = async () => {
+    try {
+      const apiIngredients = await api.getUserIngredients('default');
+      const ingredientsMap = new Map<string, { quantity: number; price: number }>();
+      apiIngredients.forEach(ing => {
+        ingredientsMap.set(ing.name, { quantity: ing.quantity, price: ing.price });
+      });
+      setUserIngredients(ingredientsMap);
+    } catch (err) {
+      console.error('Error loading user ingredients:', err);
+      // Не показываем ошибку пользователю
+    }
+  };
 
   const loadRecipes = async () => {
     try {
@@ -110,12 +136,13 @@ export default function App() {
       
       apiMenuPlans.forEach(plan => {
         const dateKey = plan.date;
+        const additional = plan.additional_recipes?.map(adaptApiRecipeListItemToFrontend) || [];
         adaptedMenuPlans[dateKey] = {
           breakfast: plan.breakfast_recipe ? adaptApiRecipeListItemToFrontend(plan.breakfast_recipe) : undefined,
           lunch: plan.lunch_recipe ? adaptApiRecipeListItemToFrontend(plan.lunch_recipe) : undefined,
           dinner: plan.dinner_recipe ? adaptApiRecipeListItemToFrontend(plan.dinner_recipe) : undefined,
           extra: plan.extra_recipe ? adaptApiRecipeListItemToFrontend(plan.extra_recipe) : undefined,
-          additional: []
+          additional: additional
         };
       });
       
@@ -145,12 +172,14 @@ export default function App() {
     // Сохраняем изменения в API
     try {
       for (const [date, plan] of Object.entries(newMenuPlan)) {
+        const additionalRecipeIds = plan.additional?.map(r => Number(r.id)).filter(id => !isNaN(id)) || [];
         await api.saveMenuPlan({
           date,
           breakfast_recipe_id: plan.breakfast?.id ? Number(plan.breakfast.id) : undefined,
           lunch_recipe_id: plan.lunch?.id ? Number(plan.lunch.id) : undefined,
           dinner_recipe_id: plan.dinner?.id ? Number(plan.dinner.id) : undefined,
           extra_recipe_id: plan.extra?.id ? Number(plan.extra.id) : undefined,
+          additional_recipe_ids: additionalRecipeIds.length > 0 ? additionalRecipeIds : undefined,
         });
       }
     } catch (err) {
@@ -162,7 +191,7 @@ export default function App() {
   // Фильтрация теперь происходит на бэкенде, но оставляем для совместимости
   const filteredRecipes = recipes;
 
-  const handleUpdateIngredient = (ingredient: string, quantity: number, price: number) => {
+  const handleUpdateIngredient = async (ingredient: string, quantity: number, price: number) => {
     setUserIngredients(prev => {
       const newMap = new Map(prev);
       if (quantity === 0) {
@@ -172,6 +201,23 @@ export default function App() {
       }
       return newMap;
     });
+
+    // Сохраняем в БД
+    try {
+      if (quantity === 0) {
+        await api.deleteUserIngredient(ingredient, 'default');
+      } else {
+        await api.saveUserIngredient({
+          name: ingredient,
+          quantity,
+          price,
+          user_id: 'default'
+        });
+      }
+    } catch (err) {
+      console.error('Error saving user ingredient:', err);
+      // Не показываем ошибку пользователю, изменения уже применены локально
+    }
   };
 
   const handleAddReview = async (recipeId: string, rating: number, comment: string, image?: string) => {
@@ -302,7 +348,7 @@ export default function App() {
             userIngredients={userIngredients}
           />
         ) : (
-          <MonthlyMenu recipes={recipes} onMenuPlanChange={handleMenuPlanChange} />
+          <MonthlyMenu recipes={recipes} menuPlan={menuPlan} onMenuPlanChange={handleMenuPlanChange} />
         )}
       </View>
 

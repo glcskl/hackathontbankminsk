@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, DateTime, Date
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, DateTime, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -87,4 +87,36 @@ class MenuPlan(Base):
     lunch_recipe = relationship("Recipe", foreign_keys=[lunch_recipe_id])
     dinner_recipe = relationship("Recipe", foreign_keys=[dinner_recipe_id])
     extra_recipe = relationship("Recipe", foreign_keys=[extra_recipe_id])
+    additional_recipes = relationship("MenuPlanAdditional", back_populates="menu_plan", cascade="all, delete-orphan", order_by="MenuPlanAdditional.order")
+
+
+class MenuPlanAdditional(Base):
+    __tablename__ = "menu_plan_additional"
+
+    id = Column(Integer, primary_key=True, index=True)
+    menu_plan_id = Column(Integer, ForeignKey("menu_plans.id"), nullable=False)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    menu_plan = relationship("MenuPlan", back_populates="additional_recipes")
+    recipe = relationship("Recipe")
+
+
+class UserIngredient(Base):
+    __tablename__ = "user_ingredients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(100), nullable=True, default="default")  # Для будущего расширения
+    name = Column(String(255), nullable=False, index=True)
+    quantity = Column(Float, nullable=False, default=0)
+    price = Column(Float, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Уникальный индекс для комбинации user_id и name
+    __table_args__ = (
+        UniqueConstraint('user_id', 'name', name='uq_user_ingredient'),
+    )
 

@@ -113,6 +113,7 @@ class MenuPlanBase(BaseModel):
     lunch_recipe_id: Optional[int] = None
     dinner_recipe_id: Optional[int] = None
     extra_recipe_id: Optional[int] = None
+    additional_recipe_ids: Optional[List[int]] = []
 
 
 class MenuPlanCreate(MenuPlanBase):
@@ -125,6 +126,26 @@ class MenuPlanResponse(MenuPlanBase):
     lunch_recipe: Optional[RecipeListItem] = None
     dinner_recipe: Optional[RecipeListItem] = None
     extra_recipe: Optional[RecipeListItem] = None
+    additional_recipes: Optional[List[RecipeListItem]] = []
+
+    class Config:
+        from_attributes = True
+
+
+# UserIngredient schemas
+class UserIngredientBase(BaseModel):
+    name: str
+    quantity: float
+    price: float
+
+
+class UserIngredientCreate(UserIngredientBase):
+    user_id: Optional[str] = None
+
+
+class UserIngredientResponse(UserIngredientBase):
+    id: int
+    user_id: Optional[str] = None
 
     class Config:
         from_attributes = True

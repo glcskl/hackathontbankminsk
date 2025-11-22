@@ -89,6 +89,7 @@ export interface MenuPlan {
   lunch_recipe?: RecipeListItem;
   dinner_recipe?: RecipeListItem;
   extra_recipe?: RecipeListItem;
+  additional_recipes?: RecipeListItem[];
 }
 
 export interface ReviewCreate {
@@ -106,6 +107,22 @@ export interface MenuPlanCreate {
   lunch_recipe_id?: number;
   dinner_recipe_id?: number;
   extra_recipe_id?: number;
+  additional_recipe_ids?: number[];
+}
+
+export interface UserIngredient {
+  id: number;
+  user_id?: string;
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+export interface UserIngredientCreate {
+  name: string;
+  quantity: number;
+  price: number;
+  user_id?: string;
 }
 
 /**
@@ -195,6 +212,58 @@ export async function saveMenuPlan(menuPlan: MenuPlanCreate): Promise<MenuPlan> 
  */
 export async function deleteMenuPlan(date: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/menu-plans/${date}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API Error: ${response.status} - ${errorText}`);
+  }
+}
+
+/**
+ * Получить ингредиенты пользователя
+ */
+export async function getUserIngredients(userId: string = 'default'): Promise<UserIngredient[]> {
+  const response = await fetch(`${API_BASE_URL}/api/user-ingredients?user_id=${userId}`);
+  return handleResponse<UserIngredient[]>(response);
+}
+
+/**
+ * Сохранить ингредиент пользователя
+ */
+export async function saveUserIngredient(ingredient: UserIngredientCreate): Promise<UserIngredient> {
+  const response = await fetch(`${API_BASE_URL}/api/user-ingredients`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(ingredient),
+  });
+  return handleResponse<UserIngredient>(response);
+}
+
+/**
+ * Сохранить несколько ингредиентов пользователя
+ */
+export async function saveUserIngredientsBatch(
+  ingredients: UserIngredientCreate[],
+  userId: string = 'default'
+): Promise<UserIngredient[]> {
+  const response = await fetch(`${API_BASE_URL}/api/user-ingredients/batch?user_id=${userId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(ingredients),
+  });
+  return handleResponse<UserIngredient[]>(response);
+}
+
+/**
+ * Удалить ингредиент пользователя
+ */
+export async function deleteUserIngredient(name: string, userId: string = 'default'): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/user-ingredients/${encodeURIComponent(name)}?user_id=${userId}`, {
     method: 'DELETE',
   });
   if (!response.ok) {

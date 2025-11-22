@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MealSlot } from './MealSlot';
@@ -8,14 +8,20 @@ import { Recipe, MealPlan } from '../types';
 
 interface MonthlyMenuProps {
   recipes: Recipe[];
+  menuPlan?: Record<string, MealPlan>;
   onMenuPlanChange?: (menuPlan: Record<string, MealPlan>) => void;
 }
 
-export function MonthlyMenu({ recipes, onMenuPlanChange }: MonthlyMenuProps) {
+export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPlanChange }: MonthlyMenuProps) {
   const [currentWeek, setCurrentWeek] = useState(0); // 0 = текущая неделя, 1 = следующая
-  const [menuPlan, setMenuPlan] = useState<Record<string, MealPlan>>({});
+  const [menuPlan, setMenuPlan] = useState<Record<string, MealPlan>>(initialMenuPlan);
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ day: string; mealType: keyof MealPlan | 'additional'; additionalIndex?: number } | null>(null);
+
+  // Обновляем локальное состояние при изменении пропса
+  useEffect(() => {
+    setMenuPlan(initialMenuPlan);
+  }, [initialMenuPlan]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
