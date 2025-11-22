@@ -24,19 +24,21 @@ export function IngredientsTab({
   const [editingIngredient, setEditingIngredient] = useState<string | null>(null);
 
   const allIngredients = useMemo(() => {
-    const ingredientsSet = new Set<string>();
+    const ingredientsMap = new Map<string, { name: string; unit: string }>();
     recipes.forEach(recipe => {
       recipe.ingredients.forEach(ing => {
-        ingredientsSet.add(ing.name);
+        if (!ingredientsMap.has(ing.name)) {
+          ingredientsMap.set(ing.name, { name: ing.name, unit: ing.unit });
+        }
       });
     });
-    return Array.from(ingredientsSet).sort();
+    return Array.from(ingredientsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [recipes]);
 
   const filteredIngredients = useMemo(() => {
     if (!searchQuery) return allIngredients;
     return allIngredients.filter(ing => 
-      ing.toLowerCase().includes(searchQuery.toLowerCase())
+      ing.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [allIngredients, searchQuery]);
 
@@ -86,7 +88,10 @@ export function IngredientsTab({
     if (current && current.quantity > 0) {
       onUpdateIngredient(ingredient, 0, current.price);
     } else {
-      onUpdateIngredient(ingredient, 100, 50);
+      // Находим единицу измерения для этого ингредиента
+      const ingData = allIngredients.find(ing => ing.name === ingredient);
+      const defaultQuantity = ingData?.unit === 'шт' ? 1 : 100;
+      onUpdateIngredient(ingredient, defaultQuantity, 50);
       setEditingIngredient(ingredient);
     }
   };
@@ -115,18 +120,29 @@ export function IngredientsTab({
           Выбрано: <Text style={styles.counterBold}>{Array.from(userIngredients.values()).filter(v => v.quantity > 0).length}</Text> из {allIngredients.length}
         </Text>
 
-        <ScrollView style={styles.ingredientsList} nestedScrollEnabled>
-          {filteredIngredients.map((ingredient) => {
-            const data = userIngredients.get(ingredient);
+        {allIngredients.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="cube-outline" size={64} color={colors.gray300} />
+            <Text style={styles.emptyStateText}>
+              Ингредиенты не найдены
+            </Text>
+            <Text style={styles.emptyStateSubtext}>
+              Загрузите рецепты, чтобы увидеть доступные ингредиенты
+            </Text>
+          </View>
+        ) : (
+          <ScrollView style={styles.ingredientsList} nestedScrollEnabled>
+            {filteredIngredients.map((ingredient) => {
+            const data = userIngredients.get(ingredient.name);
             const isSelected = data && data.quantity > 0;
             
             return (
               <View
-                key={ingredient}
+                key={ingredient.name}
                 style={[styles.ingredientCard, isSelected && styles.ingredientCardSelected]}
               >
                 <TouchableOpacity
-                  onPress={() => handleToggleIngredient(ingredient)}
+                  onPress={() => handleToggleIngredient(ingredient.name)}
                   style={styles.ingredientButton}
                 >
                   <Ionicons
@@ -134,12 +150,19 @@ export function IngredientsTab({
                     size={20}
                     color={isSelected ? colors.black : colors.textSecondary}
                   />
-                  <Text style={[styles.ingredientName, isSelected && styles.ingredientNameSelected]}>
-                    {ingredient}
-                  </Text>
+                  <View style={styles.ingredientInfo}>
+                    <Text style={[styles.ingredientName, isSelected && styles.ingredientNameSelected]}>
+                      {ingredient.name}
+                    </Text>
+                    {!isSelected && (
+                      <Text style={styles.ingredientUnitHint}>
+                        Ед. измерения: {ingredient.unit}
+                      </Text>
+                    )}
+                  </View>
                   {isSelected && (
                     <Text style={styles.ingredientQuantity}>
-                      {data.quantity}г
+                      {data.quantity} {ingredient.unit}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -147,54 +170,67 @@ export function IngredientsTab({
                 {isSelected && (
                   <View style={styles.ingredientControls}>
                     <View style={styles.quantityControl}>
-                      <TouchableOpacity
-                        onPress={() => handleUpdateQuantity(ingredient, -10)}
-                        style={styles.controlButton}
-                      >
-                        <Ionicons name="remove" size={16} color={colors.black} />
-                      </TouchableOpacity>
-                      <Input
-                        value={data.quantity.toString()}
-                        onChangeText={(text) => onUpdateIngredient(ingredient, parseFloat(text) || 0, data.price)}
-                        keyboardType="numeric"
-                        style={styles.quantityInput}
-                      />
-                      <Text style={styles.unitText}>г/мл/шт</Text>
-                      <TouchableOpacity
-                        onPress={() => handleUpdateQuantity(ingredient, 10)}
-                        style={styles.controlButton}
-                      >
-                        <Ionicons name="add" size={16} color={colors.black} />
-                      </TouchableOpacity>
+                      <Text style={styles.controlLabel}>Количество ({ingredient.unit}):</Text>
+                      <View style={styles.quantityControlRow}>
+                        <TouchableOpacity
+                          onPress={() => handleUpdateQuantity(ingredient.name, -10)}
+                          style={styles.controlButton}
+                        >
+                          <Ionicons name="remove" size={16} color={colors.black} />
+                        </TouchableOpacity>
+                        <Input
+                          value={data.quantity.toString()}
+                          onChangeText={(text) => onUpdateIngredient(ingredient.name, parseFloat(text) || 0, data.price)}
+                          keyboardType="numeric"
+                          style={styles.quantityInput}
+                        />
+                        <TouchableOpacity
+                          onPress={() => handleUpdateQuantity(ingredient.name, 10)}
+                          style={styles.controlButton}
+                        >
+                          <Ionicons name="add" size={16} color={colors.black} />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                     
                     <View style={styles.priceControl}>
-                      <Text style={styles.priceLabel}>Цена за ед.:</Text>
-                      <Input
-                        value={data.price.toString()}
-                        onChangeText={(text) => handleUpdatePrice(ingredient, parseFloat(text) || 0)}
-                        keyboardType="numeric"
-                        style={styles.priceInput}
-                      />
-                      <Text style={styles.unitText}>₽</Text>
+                      <Text style={styles.priceLabel}>Цена за {ingredient.unit}:</Text>
+                      <View style={styles.priceControlRow}>
+                        <Input
+                          value={data.price.toString()}
+                          onChangeText={(text) => handleUpdatePrice(ingredient.name, parseFloat(text) || 0)}
+                          keyboardType="numeric"
+                          style={styles.priceInput}
+                        />
+                        <Text style={styles.unitText}>₽</Text>
+                      </View>
                     </View>
                   </View>
                 )}
               </View>
             );
           })}
-        </ScrollView>
+          </ScrollView>
+        )}
 
-        {filteredIngredients.length === 0 && (
-          <Text style={styles.emptyText}>Ингредиенты не найдены</Text>
+        {filteredIngredients.length === 0 && allIngredients.length > 0 && (
+          <Text style={styles.emptyText}>Ингредиенты не найдены по запросу "{searchQuery}"</Text>
         )}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Рекомендованные рецепты</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Рекомендованные рецепты</Text>
+          {sortedRecipes.length > 0 && (
+            <Text style={styles.recipesCount}>
+              Найдено: {sortedRecipes.length}
+            </Text>
+          )}
+        </View>
         
         {Array.from(userIngredients.values()).filter(v => v.quantity > 0).length === 0 ? (
           <View style={styles.emptyState}>
+            <Ionicons name="restaurant-outline" size={64} color={colors.gray300} />
             <Text style={styles.emptyStateText}>
               Выберите ингредиенты, которые у вас есть
             </Text>
@@ -204,6 +240,7 @@ export function IngredientsTab({
           </View>
         ) : sortedRecipes.length === 0 ? (
           <View style={styles.emptyState}>
+            <Ionicons name="search-outline" size={64} color={colors.gray300} />
             <Text style={styles.emptyStateText}>
               К сожалению, нет рецептов с вашими ингредиентами
             </Text>
@@ -219,21 +256,47 @@ export function IngredientsTab({
                 
                 <View style={styles.matchInfo}>
                   <View style={styles.matchHeader}>
-                    <Text style={styles.matchText}>
-                      Совпадение: {matchingCount} из {totalCount} ингредиентов
-                    </Text>
-                    <Text style={styles.matchPercent}>{matchPercent}%</Text>
+                    <View style={styles.matchInfoLeft}>
+                      <Ionicons 
+                        name={matchPercent === 100 ? 'checkmark-circle' : 'information-circle-outline'} 
+                        size={18} 
+                        color={matchPercent === 100 ? colors.primary : colors.textSecondary} 
+                      />
+                      <Text style={styles.matchText}>
+                        Совпадение: {matchingCount} из {totalCount} ингредиентов
+                      </Text>
+                    </View>
+                    <View style={[styles.matchPercentBadge, matchPercent === 100 && styles.matchPercentBadgeComplete]}>
+                      <Text style={[styles.matchPercent, matchPercent === 100 && styles.matchPercentComplete]}>
+                        {matchPercent}%
+                      </Text>
+                    </View>
                   </View>
                   <View style={styles.progressBar}>
                     <View 
-                      style={[styles.progressFill, { width: `${matchPercent}%` }]}
+                      style={[
+                        styles.progressFill, 
+                        { width: `${matchPercent}%` },
+                        matchPercent === 100 && styles.progressFillComplete
+                      ]}
                     />
                   </View>
                   
                   {missingIngredients.length > 0 && (
-                    <Text style={styles.missingText}>
-                      Нужно купить: {missingIngredients.join(', ')}
-                    </Text>
+                    <View style={styles.missingContainer}>
+                      <Ionicons name="cart-outline" size={16} color={colors.textSecondary} />
+                      <Text style={styles.missingText}>
+                        Нужно купить: <Text style={styles.missingTextBold}>{missingIngredients.join(', ')}</Text>
+                      </Text>
+                    </View>
+                  )}
+                  {matchPercent === 100 && (
+                    <View style={styles.completeContainer}>
+                      <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                      <Text style={styles.completeText}>
+                        Все ингредиенты есть! Можно готовить
+                      </Text>
+                    </View>
                   )}
                 </View>
               </View>
@@ -269,6 +332,17 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginBottom: 16,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  recipesCount: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
   searchContainer: {
     marginBottom: 16,
   },
@@ -298,18 +372,27 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
   },
-  ingredientName: {
+  ingredientInfo: {
     flex: 1,
+  },
+  ingredientName: {
     fontSize: 14,
     color: colors.text,
+    fontWeight: '500',
   },
   ingredientNameSelected: {
     color: colors.black,
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  ingredientUnitHint: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   ingredientQuantity: {
     fontSize: 14,
     color: colors.text,
+    fontWeight: '600',
   },
   ingredientControls: {
     paddingHorizontal: 12,
@@ -317,6 +400,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   quantityControl: {
+    gap: 8,
+  },
+  controlLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  quantityControlRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -338,6 +429,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   priceControl: {
+    gap: 8,
+  },
+  priceControlRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -387,13 +481,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  matchInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
   matchText: {
     fontSize: 14,
     color: colors.textSecondary,
   },
+  matchPercentBadge: {
+    backgroundColor: colors.grayBg,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  matchPercentBadgeComplete: {
+    backgroundColor: colors.primary,
+  },
   matchPercent: {
     fontSize: 14,
     fontWeight: '600',
+    color: colors.black,
+  },
+  matchPercentComplete: {
     color: colors.black,
   },
   progressBar: {
@@ -408,9 +520,36 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 4,
   },
+  progressFillComplete: {
+    backgroundColor: colors.primary,
+  },
+  missingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
   missingText: {
     fontSize: 14,
     color: colors.text,
+  },
+  missingTextBold: {
+    fontWeight: '600',
+    color: colors.black,
+  },
+  completeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+    padding: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+  },
+  completeText: {
+    fontSize: 14,
+    color: colors.black,
+    fontWeight: '600',
   },
 });
 

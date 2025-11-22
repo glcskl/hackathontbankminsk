@@ -81,6 +81,13 @@ export default function App() {
     loadRecipes();
   }, [activeCategory, searchQuery]);
 
+  // Загружаем полные данные рецептов при открытии вкладки ингредиентов
+  useEffect(() => {
+    if (activeTab === 'ingredients' && recipes.length > 0) {
+      loadFullRecipesForIngredients();
+    }
+  }, [activeTab]);
+
   // Загрузка меню планов при монтировании и при переключении на вкладку меню
   useEffect(() => {
     loadMenuPlans();
@@ -126,6 +133,42 @@ export default function App() {
       console.error('Error loading recipes:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFullRecipesForIngredients = async () => {
+    try {
+      // Проверяем, нужно ли загружать полные данные
+      const needsFullData = recipes.some(recipe => !recipe.ingredients || recipe.ingredients.length === 0);
+      if (!needsFullData) return;
+
+      // Загружаем полные данные для рецептов без ингредиентов
+      const recipesToLoad = recipes.filter(recipe => !recipe.ingredients || recipe.ingredients.length === 0);
+      const fullRecipes = await Promise.all(
+        recipesToLoad.map(async (recipe) => {
+          try {
+            const fullRecipe = await api.getRecipe(Number(recipe.id));
+            return adaptApiRecipeToFrontend(fullRecipe);
+          } catch (err) {
+            console.error(`Error loading full recipe ${recipe.id}:`, err);
+            return recipe; // Возвращаем оригинальный рецепт при ошибке
+          }
+        })
+      );
+
+      // Обновляем рецепты с полными данными
+      setRecipes(prevRecipes => {
+        const updatedRecipes = [...prevRecipes];
+        fullRecipes.forEach(fullRecipe => {
+          const index = updatedRecipes.findIndex(r => r.id === fullRecipe.id);
+          if (index !== -1) {
+            updatedRecipes[index] = fullRecipe;
+          }
+        });
+        return updatedRecipes;
+      });
+    } catch (err) {
+      console.error('Error loading full recipes for ingredients:', err);
     }
   };
 
