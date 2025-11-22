@@ -201,6 +201,156 @@ export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPla
     return date.getMonth() === currentMonth;
   };
 
+  const handleAutoPlanWeek = async () => {
+    if (recipes.length === 0) return;
+
+    // Группируем рецепты по категориям
+    const recipesByCategory: Record<string, Recipe[]> = {
+      'Завтрак': [],
+      'Обед': [],
+      'Ужин': [],
+      'Десерт': [],
+      'Все': []
+    };
+
+    recipes.forEach(recipe => {
+      if (recipe.category in recipesByCategory) {
+        recipesByCategory[recipe.category].push(recipe);
+      }
+      recipesByCategory['Все'].push(recipe);
+    });
+
+    // Функция для получения случайного рецепта из категории
+    const getRandomRecipe = (category: string): Recipe | undefined => {
+      const categoryRecipes = recipesByCategory[category];
+      if (categoryRecipes.length > 0) {
+        return categoryRecipes[Math.floor(Math.random() * categoryRecipes.length)];
+      }
+      // Если нет рецептов в категории, используем любые доступные
+      if (recipes.length > 0) {
+        return recipes[Math.floor(Math.random() * recipes.length)];
+      }
+      return undefined;
+    };
+
+    // Создаем план для недели
+    const newPlan: Record<string, MealPlan> = { ...menuPlan };
+    const usedRecipes = new Set<string>(); // Для отслеживания использованных рецептов
+
+    currentWeekDays.forEach((date) => {
+      const dayKey = date.toISOString().split('T')[0];
+      
+      // Получаем рецепты для каждого приема пищи
+      let breakfast = getRandomRecipe('Завтрак');
+      let lunch = getRandomRecipe('Обед');
+      let dinner = getRandomRecipe('Ужин');
+      let extra = getRandomRecipe('Десерт');
+
+      // Если рецепт уже использован, берем другой
+      const getUniqueRecipe = (recipe: Recipe | undefined, category: string): Recipe | undefined => {
+        if (!recipe) return undefined;
+        if (usedRecipes.has(recipe.id)) {
+          // Пробуем найти другой рецепт из той же категории
+          const categoryRecipes = recipesByCategory[category].filter(r => !usedRecipes.has(r.id));
+          if (categoryRecipes.length > 0) {
+            return categoryRecipes[Math.floor(Math.random() * categoryRecipes.length)];
+          }
+          // Если все рецепты категории использованы, сбрасываем счетчик и используем любой
+          if (recipesByCategory[category].length > 0) {
+            return recipesByCategory[category][Math.floor(Math.random() * recipesByCategory[category].length)];
+          }
+          return recipe;
+        }
+        return recipe;
+      };
+
+      breakfast = getUniqueRecipe(breakfast, 'Завтрак');
+      lunch = getUniqueRecipe(lunch, 'Обед');
+      dinner = getUniqueRecipe(dinner, 'Ужин');
+      extra = getUniqueRecipe(extra, 'Десерт');
+
+      // Отмечаем использованные рецепты
+      if (breakfast) usedRecipes.add(breakfast.id);
+      if (lunch) usedRecipes.add(lunch.id);
+      if (dinner) usedRecipes.add(dinner.id);
+      if (extra) usedRecipes.add(extra.id);
+
+      // Если использовано много рецептов, сбрасываем счетчик для разнообразия
+      if (usedRecipes.size > recipes.length * 0.7) {
+        usedRecipes.clear();
+      }
+
+      newPlan[dayKey] = {
+        breakfast,
+        lunch,
+        dinner,
+        extra
+      };
+    });
+
+    // Загружаем полные данные рецептов перед сохранением
+    const loadFullRecipesForPlan = async (plan: Record<string, MealPlan>) => {
+      const updatedPlan: Record<string, MealPlan> = {};
+      
+      for (const [dayKey, dayPlan] of Object.entries(plan)) {
+        const updatedDayPlan: MealPlan = {};
+        
+        const loadRecipe = async (recipe: Recipe | undefined): Promise<Recipe | undefined> => {
+          if (!recipe) return undefined;
+          if (recipe.ingredients && recipe.ingredients.length > 0) {
+            return recipe; // Уже есть полные данные
+          }
+          try {
+            const apiRecipe = await api.getRecipe(Number(recipe.id));
+            return {
+              ...recipe,
+              ingredients: apiRecipe.ingredients.map(ing => ({
+                name: ing.name,
+                amount: ing.amount,
+                unit: ing.unit
+              })),
+              steps: apiRecipe.steps.map(step => ({
+                number: step.number,
+                instruction: step.instruction,
+                image: step.image,
+                ingredients: []
+              }))
+            };
+          } catch (err) {
+            console.error('Error loading full recipe:', err);
+            return recipe;
+          }
+        };
+
+        updatedDayPlan.breakfast = await loadRecipe(dayPlan.breakfast);
+        updatedDayPlan.lunch = await loadRecipe(dayPlan.lunch);
+        updatedDayPlan.dinner = await loadRecipe(dayPlan.dinner);
+        updatedDayPlan.extra = await loadRecipe(dayPlan.extra);
+        if (dayPlan.additional) {
+          updatedDayPlan.additional = await Promise.all(
+            dayPlan.additional.map(recipe => loadRecipe(recipe))
+          );
+          updatedDayPlan.additional = updatedDayPlan.additional.filter((r): r is Recipe => r !== undefined);
+        }
+
+        updatedPlan[dayKey] = updatedDayPlan;
+      }
+
+      return updatedPlan;
+    };
+
+    try {
+      const planWithFullRecipes = await loadFullRecipesForPlan(newPlan);
+      setMenuPlan(planWithFullRecipes);
+      
+      if (onMenuPlanChange) {
+        onMenuPlanChange(planWithFullRecipes);
+      }
+    } catch (err) {
+      console.error('Error auto-planning week:', err);
+    }
+  };
+
   return (
     <ScrollView 
       style={styles.container} 
@@ -248,6 +398,14 @@ export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPla
             {currentWeek === 0 ? 'Текущая неделя' : 'Следующая неделя'}
           </Text>
         </View>
+        <TouchableOpacity
+          onPress={handleAutoPlanWeek}
+          style={styles.autoPlanButton}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="restaurant" size={18} color={colors.white} />
+          <Text style={styles.autoPlanButtonText}>Составить</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.daysList}>
@@ -452,6 +610,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '500',
+  },
+  autoPlanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  autoPlanButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.white,
   },
   daysList: {
     gap: 24,
