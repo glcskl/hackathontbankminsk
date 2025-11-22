@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { Checkbox } from './ui/Checkbox';
@@ -284,10 +284,15 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
                 activeOpacity={0.7}
               >
                 <View style={styles.itemContent}>
-                  <Checkbox
-                    checked={isPurchased}
-                    onCheckedChange={() => togglePurchased(itemKey, item.name, tabKey)}
-                  />
+                  <View
+                    onStartShouldSetResponder={() => true}
+                    onResponderRelease={() => togglePurchased(itemKey, item.name, tabKey)}
+                  >
+                    <Checkbox
+                      checked={isPurchased}
+                      onCheckedChange={() => togglePurchased(itemKey, item.name, tabKey)}
+                    />
+                  </View>
                   <View style={styles.itemRightContent}>
                     <View style={styles.itemHeader}>
                       <View style={styles.itemInfo}>
