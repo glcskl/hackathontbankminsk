@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vibecoders-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://app:password@postgres:5432/vibecoders_db
+      - PORT=8000
+      - DEBUG=True
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    networks:
+      - expo-network
+
   expo:
     build:
       context: .
@@ -19,11 +38,13 @@ services:
       - EXPO_NO_DOTENV=1
       - NODE_ENV=development
       - DATABASE_URL=postgresql://app:password@postgres:5432/vibecoders_db
+      - API_URL=http://backend:8000
     stdin_open: true
     tty: true
     restart: unless-stopped
     depends_on:
       - postgres
+      - backend
     networks:
       - expo-network
 

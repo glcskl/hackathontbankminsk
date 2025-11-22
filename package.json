@@ -7,11 +7,14 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "docker:logs:expo": "docker-compose logs -f expo",
+    "docker:logs:backend": "docker-compose logs -f backend",
     "docker:logs:postgres": "docker-compose logs -f postgres",
     "frontend:install": "cd frontend && npm install --legacy-peer-deps",
     "frontend:start": "cd frontend && npm start",
     "frontend:ios": "cd frontend && npm run ios",
     "frontend:android": "cd frontend && npm run android",
-    "frontend:web": "cd frontend && npm run web"
+    "frontend:web": "cd frontend && npm run web",
+    "backend:install": "cd backend && pip install -r requirements.txt",
+    "backend:start": "cd backend && uvicorn main:app --reload --host 0.0.0.0 --port 8000"
   }
 }
