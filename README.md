@@ -86,6 +86,43 @@ You've successfully run and modified your React Native App. :partying_face:
 
 If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
 
+# Docker Setup
+
+Проект использует Docker Compose для запуска всех сервисов (backend, frontend, database).
+
+## Автоматическое определение IP адреса
+
+IP адрес хоста определяется автоматически при запуске через скрипты `docker-up.sh` (bash) или `docker-up.fish` (fish shell).
+
+### Использование:
+
+**Bash/Zsh:**
+```bash
+./docker-up.sh up --build
+# или через npm
+npm run docker:up
+```
+
+**Fish shell:**
+```fish
+./docker-up.fish up --build
+```
+
+**Ручная установка IP (если автоматическое определение не работает):**
+```bash
+export HOST_IP=your.ip.address.here
+docker-compose up --build
+```
+
+## Доступные команды:
+
+- `npm run docker:up` - запустить все сервисы
+- `npm run docker:down` - остановить все сервисы
+- `npm run docker:logs` - посмотреть логи всех сервисов
+- `npm run docker:logs:expo` - логи только Expo
+- `npm run docker:logs:backend` - логи только бэкенда
+- `npm run docker:logs:postgres` - логи только PostgreSQL
+
 # Learn More
 
 To learn more about React Native, take a look at the following resources:
