@@ -134,17 +134,39 @@ export default function App() {
       const apiMenuPlans = await api.getMenuPlans();
       const adaptedMenuPlans: Record<string, MealPlan> = {};
       
-      apiMenuPlans.forEach(plan => {
+      // Загружаем полные данные рецептов с ингредиентами
+      const loadFullRecipe = async (recipeListItem: api.RecipeListItem | undefined): Promise<Recipe | undefined> => {
+        if (!recipeListItem) return undefined;
+        try {
+          const fullRecipe = await api.getRecipe(recipeListItem.id);
+          return adaptApiRecipeToFrontend(fullRecipe);
+        } catch (err) {
+          console.error(`Error loading full recipe ${recipeListItem.id}:`, err);
+          // Если не удалось загрузить полные данные, используем базовую информацию
+          return adaptApiRecipeListItemToFrontend(recipeListItem);
+        }
+      };
+      
+      // Загружаем все рецепты параллельно
+      for (const plan of apiMenuPlans) {
         const dateKey = plan.date;
-        const additional = plan.additional_recipes?.map(adaptApiRecipeListItemToFrontend) || [];
+        
+        const [breakfast, lunch, dinner, extra, ...additional] = await Promise.all([
+          loadFullRecipe(plan.breakfast_recipe),
+          loadFullRecipe(plan.lunch_recipe),
+          loadFullRecipe(plan.dinner_recipe),
+          loadFullRecipe(plan.extra_recipe),
+          ...(plan.additional_recipes || []).map(recipe => loadFullRecipe(recipe))
+        ]);
+        
         adaptedMenuPlans[dateKey] = {
-          breakfast: plan.breakfast_recipe ? adaptApiRecipeListItemToFrontend(plan.breakfast_recipe) : undefined,
-          lunch: plan.lunch_recipe ? adaptApiRecipeListItemToFrontend(plan.lunch_recipe) : undefined,
-          dinner: plan.dinner_recipe ? adaptApiRecipeListItemToFrontend(plan.dinner_recipe) : undefined,
-          extra: plan.extra_recipe ? adaptApiRecipeListItemToFrontend(plan.extra_recipe) : undefined,
-          additional: additional
+          breakfast,
+          lunch,
+          dinner,
+          extra,
+          additional: additional.filter((r): r is Recipe => r !== undefined)
         };
-      });
+      }
       
       setMenuPlan(adaptedMenuPlans);
     } catch (err) {

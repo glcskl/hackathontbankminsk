@@ -5,6 +5,7 @@ import { MealSlot } from './MealSlot';
 import { RecipeSelector } from './RecipeSelector';
 import { colors } from '../constants/colors';
 import { Recipe, MealPlan } from '../types';
+import * as api from '../services/api';
 
 interface MonthlyMenuProps {
   recipes: Recipe[];
@@ -121,8 +122,33 @@ export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPla
     });
   };
 
-  const handleSelectRecipe = (recipe: Recipe) => {
+  const handleSelectRecipe = async (recipe: Recipe) => {
     if (selectedSlot) {
+      // Если у рецепта нет ингредиентов, загружаем полные данные
+      let fullRecipe = recipe;
+      if (!recipe.ingredients || recipe.ingredients.length === 0) {
+        try {
+          const apiRecipe = await api.getRecipe(Number(recipe.id));
+          fullRecipe = {
+            ...recipe,
+            ingredients: apiRecipe.ingredients.map(ing => ({
+              name: ing.name,
+              amount: ing.amount,
+              unit: ing.unit
+            })),
+            steps: apiRecipe.steps.map(step => ({
+              number: step.number,
+              instruction: step.instruction,
+              image: step.image,
+              ingredients: []
+            }))
+          };
+        } catch (err) {
+          console.error('Error loading full recipe:', err);
+          // Используем рецепт без ингредиентов, если не удалось загрузить
+        }
+      }
+      
       setMenuPlan(prev => {
         const newPlan = { ...prev };
         const dayPlan = { ...newPlan[selectedSlot.day] };
@@ -130,13 +156,13 @@ export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPla
         if (selectedSlot.mealType === 'additional') {
           const additional = [...(dayPlan.additional || [])];
           if (selectedSlot.additionalIndex !== undefined) {
-            additional[selectedSlot.additionalIndex] = recipe;
+            additional[selectedSlot.additionalIndex] = fullRecipe;
           } else {
-            additional.push(recipe);
+            additional.push(fullRecipe);
           }
           dayPlan.additional = additional;
         } else {
-          dayPlan[selectedSlot.mealType] = recipe;
+          dayPlan[selectedSlot.mealType] = fullRecipe;
         }
         
         newPlan[selectedSlot.day] = dayPlan;

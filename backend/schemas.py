@@ -150,3 +150,22 @@ class UserIngredientResponse(UserIngredientBase):
     class Config:
         from_attributes = True
 
+
+# PurchasedItem schemas
+class PurchasedItemBase(BaseModel):
+    item_name: str
+    tab_key: str
+    purchased: int = 1  # 1 = purchased, 0 = not purchased
+
+
+class PurchasedItemCreate(PurchasedItemBase):
+    user_id: Optional[str] = None
+
+
+class PurchasedItemResponse(PurchasedItemBase):
+    id: int
+    user_id: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+

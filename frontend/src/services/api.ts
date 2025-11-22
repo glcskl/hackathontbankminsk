@@ -125,6 +125,21 @@ export interface UserIngredientCreate {
   user_id?: string;
 }
 
+export interface PurchasedItem {
+  id: number;
+  user_id?: string;
+  item_name: string;
+  tab_key: string;
+  purchased: number;
+}
+
+export interface PurchasedItemCreate {
+  item_name: string;
+  tab_key: string;
+  purchased: number;
+  user_id?: string;
+}
+
 /**
  * Обработка ошибок API
  */
@@ -270,5 +285,51 @@ export async function deleteUserIngredient(name: string, userId: string = 'defau
     const errorText = await response.text();
     throw new Error(`API Error: ${response.status} - ${errorText}`);
   }
+}
+
+/**
+ * Получить список купленных продуктов
+ */
+export async function getPurchasedItems(
+  userId: string = 'default',
+  tabKey?: string
+): Promise<PurchasedItem[]> {
+  const params = new URLSearchParams();
+  params.append('user_id', userId);
+  if (tabKey) params.append('tab_key', tabKey);
+  
+  const response = await fetch(`${API_BASE_URL}/api/purchased-items?${params.toString()}`);
+  return handleResponse<PurchasedItem[]>(response);
+}
+
+/**
+ * Сохранить статус купленного продукта
+ */
+export async function togglePurchasedItem(item: PurchasedItemCreate): Promise<PurchasedItem> {
+  const response = await fetch(`${API_BASE_URL}/api/purchased-items`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(item),
+  });
+  return handleResponse<PurchasedItem>(response);
+}
+
+/**
+ * Сохранить несколько купленных продуктов
+ */
+export async function savePurchasedItemsBatch(
+  items: PurchasedItemCreate[],
+  userId: string = 'default'
+): Promise<PurchasedItem[]> {
+  const response = await fetch(`${API_BASE_URL}/api/purchased-items/batch?user_id=${userId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(items),
+  });
+  return handleResponse<PurchasedItem[]>(response);
 }
 

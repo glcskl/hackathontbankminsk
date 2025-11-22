@@ -1,9 +1,11 @@
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
+import { Checkbox } from './ui/Checkbox';
 import { colors } from '../constants/colors';
 import { Recipe, MealPlan } from '../types';
+import * as api from '../services/api';
 
 interface ShoppingListTabProps {
   menuPlan: Record<string, MealPlan>;
@@ -21,8 +23,74 @@ interface ShoppingItem {
 }
 
 export function ShoppingListTab({ menuPlan, recipes, userIngredients }: ShoppingListTabProps) {
+  const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
+  const [loadingPurchased, setLoadingPurchased] = useState(true);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  // Загружаем купленные продукты из БД
+  useEffect(() => {
+    loadPurchasedItems();
+  }, []);
+
+  const loadPurchasedItems = async () => {
+    try {
+      setLoadingPurchased(true);
+      const items = await api.getPurchasedItems('default');
+      const purchasedSet = new Set<string>();
+      
+      items.forEach(item => {
+        if (item.purchased === 1) {
+          const itemKey = `${item.tab_key}-${item.item_name}`;
+          purchasedSet.add(itemKey);
+        }
+      });
+      
+      setPurchasedItems(purchasedSet);
+    } catch (err) {
+      console.error('Error loading purchased items:', err);
+    } finally {
+      setLoadingPurchased(false);
+    }
+  };
+
+  const togglePurchased = async (itemKey: string, itemName: string, tabKey: string) => {
+    const isCurrentlyPurchased = purchasedItems.has(itemKey);
+    const newPurchased = isCurrentlyPurchased ? 0 : 1;
+    
+    // Обновляем локальное состояние сразу для быстрого отклика
+    setPurchasedItems(prev => {
+      const newSet = new Set(prev);
+      if (newPurchased === 1) {
+        newSet.add(itemKey);
+      } else {
+        newSet.delete(itemKey);
+      }
+      return newSet;
+    });
+
+    // Сохраняем в БД
+    try {
+      await api.togglePurchasedItem({
+        item_name: itemName,
+        tab_key: tabKey,
+        purchased: newPurchased,
+        user_id: 'default'
+      });
+    } catch (err) {
+      console.error('Error saving purchased item:', err);
+      // Откатываем изменение при ошибке
+      setPurchasedItems(prev => {
+        const newSet = new Set(prev);
+        if (newPurchased === 1) {
+          newSet.delete(itemKey);
+        } else {
+          newSet.add(itemKey);
+        }
+        return newSet;
+      });
+    }
+  };
 
   const getTomorrowDate = () => {
     const tomorrow = new Date(today);
@@ -61,6 +129,11 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
         ].filter(Boolean) as Recipe[];
 
         allMeals.forEach(recipe => {
+          // Проверяем, что у рецепта есть ингредиенты
+          if (!recipe.ingredients || recipe.ingredients.length === 0) {
+            return; // Пропускаем рецепты без ингредиентов
+          }
+          
           recipe.ingredients.forEach(ing => {
             const amount = parseFloat(ing.amount) || 0;
             const userIng = userIngredients.get(ing.name);
@@ -129,8 +202,14 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
     [menuPlan, userIngredients]
   );
 
-  const calculateTotal = (list: ShoppingItem[]) => {
-    return list.reduce((sum, item) => sum + item.total, 0);
+  const calculateTotal = (list: ShoppingItem[], tabKey: string) => {
+    return list.reduce((sum, item) => {
+      const itemKey = `${tabKey}-${item.name}`;
+      if (purchasedItems.has(itemKey)) {
+        return sum; // Исключаем купленные продукты из стоимости
+      }
+      return sum + item.total;
+    }, 0);
   };
 
   const formatPrice = (price: number) => {
@@ -142,8 +221,9 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
     }).format(price);
   };
 
-  const renderShoppingList = (list: ShoppingItem[], title: string) => {
-    const total = calculateTotal(list);
+  const renderShoppingList = (list: ShoppingItem[], title: string, tabKey: string) => {
+    const total = calculateTotal(list, tabKey);
+    const unpurchasedCount = list.filter(item => !purchasedItems.has(`${tabKey}-${item.name}`)).length;
 
     if (list.length === 0) {
       return (
@@ -167,36 +247,62 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
           <Ionicons name="cart" size={32} color={colors.black} />
         </View>
         <Text style={styles.totalItems}>
-          {list.length} {list.length === 1 ? 'позиция' : list.length < 5 ? 'позиции' : 'позиций'}
+          {unpurchasedCount} {unpurchasedCount === 1 ? 'позиция' : unpurchasedCount < 5 ? 'позиции' : 'позиций'} {list.length !== unpurchasedCount && `(${list.length - unpurchasedCount} куплено)`}
         </Text>
 
         <View style={styles.itemsList}>
-          {list.map((item, index) => (
-            <View key={index} style={styles.item}>
-              <View style={styles.itemHeader}>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemDetails}>
-                    {item.needed.toFixed(1).replace(/\.0$/, '')} {item.unit} × {formatPrice(item.price)}
-                  </Text>
-                </View>
-                <Text style={styles.itemPrice}>{formatPrice(item.total)}</Text>
-              </View>
-              
-              {item.recipes.length > 0 && (
-                <View style={styles.itemRecipes}>
-                  <Text style={styles.itemRecipesLabel}>Используется в:</Text>
-                  <View style={styles.itemRecipesList}>
-                    {item.recipes.map((recipe, idx) => (
-                      <View key={idx} style={styles.recipeTag}>
-                        <Text style={styles.recipeTagText}>{recipe}</Text>
+          {list.map((item, index) => {
+            const itemKey = `${tabKey}-${item.name}`;
+            const isPurchased = purchasedItems.has(itemKey);
+            
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[styles.item, isPurchased && styles.itemPurchased]}
+                onPress={() => togglePurchased(itemKey, item.name, tabKey)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.itemContent}>
+                  <Checkbox
+                    checked={isPurchased}
+                    onCheckedChange={() => togglePurchased(itemKey, item.name, tabKey)}
+                  />
+                  <View style={styles.itemRightContent}>
+                    <View style={styles.itemHeader}>
+                      <View style={styles.itemInfo}>
+                        <Text style={[styles.itemName, isPurchased && styles.itemNamePurchased]}>
+                          {item.name}
+                        </Text>
+                        <Text style={[styles.itemDetails, isPurchased && styles.itemDetailsPurchased]}>
+                          {item.needed.toFixed(1).replace(/\.0$/, '')} {item.unit} × {formatPrice(item.price)}
+                        </Text>
                       </View>
-                    ))}
+                      <Text style={[styles.itemPrice, isPurchased && styles.itemPricePurchased]}>
+                        {formatPrice(item.total)}
+                      </Text>
+                    </View>
+                    
+                    {item.recipes.length > 0 && (
+                      <View style={styles.itemRecipes}>
+                        <Text style={[styles.itemRecipesLabel, isPurchased && styles.itemRecipesLabelPurchased]}>
+                          Используется в:
+                        </Text>
+                        <View style={styles.itemRecipesList}>
+                          {item.recipes.map((recipe, idx) => (
+                            <View key={idx} style={styles.recipeTag}>
+                              <Text style={[styles.recipeTagText, isPurchased && styles.recipeTagTextPurchased]}>
+                                {recipe}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    )}
                   </View>
                 </View>
-              )}
-            </View>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
     );
@@ -208,7 +314,11 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.header}>
         <View style={styles.headerIcon}>
           <Ionicons name="cart" size={24} color={colors.black} />
@@ -230,27 +340,30 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
 
         <TabsContent value="tomorrow">
           <Text style={styles.dateLabel}>{getTomorrowDateFormatted()}</Text>
-          {renderShoppingList(tomorrowList, 'Завтра')}
+          {renderShoppingList(tomorrowList, 'Завтра', 'tomorrow')}
         </TabsContent>
 
         <TabsContent value="week">
           <Text style={styles.dateLabel}>Следующие 7 дней</Text>
-          {renderShoppingList(weekList, 'Неделя')}
+          {renderShoppingList(weekList, 'Неделя', 'week')}
         </TabsContent>
 
         <TabsContent value="month">
           <Text style={styles.dateLabel}>Следующие 30 дней</Text>
-          {renderShoppingList(monthList, 'Месяц')}
+          {renderShoppingList(monthList, 'Месяц', 'month')}
         </TabsContent>
       </Tabs>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  contentContainer: {
     padding: 16,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -327,6 +440,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  itemPurchased: {
+    opacity: 0.6,
+    backgroundColor: colors.grayBg,
+  },
+  itemContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  itemRightContent: {
+    flex: 1,
+  },
   itemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -342,14 +467,25 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginBottom: 4,
   },
+  itemNamePurchased: {
+    textDecorationLine: 'line-through',
+    color: colors.textSecondary,
+  },
   itemDetails: {
     fontSize: 14,
     color: colors.textSecondary,
+  },
+  itemDetailsPurchased: {
+    textDecorationLine: 'line-through',
   },
   itemPrice: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.black,
+  },
+  itemPricePurchased: {
+    textDecorationLine: 'line-through',
+    color: colors.textSecondary,
   },
   itemRecipes: {
     marginTop: 8,
@@ -361,6 +497,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginBottom: 4,
+  },
+  itemRecipesLabelPurchased: {
+    textDecorationLine: 'line-through',
   },
   itemRecipesList: {
     flexDirection: 'row',
@@ -376,6 +515,9 @@ const styles = StyleSheet.create({
   recipeTagText: {
     fontSize: 12,
     color: colors.text,
+  },
+  recipeTagTextPurchased: {
+    textDecorationLine: 'line-through',
   },
   emptyContainer: {
     alignItems: 'center',

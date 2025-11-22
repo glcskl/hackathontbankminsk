@@ -120,3 +120,20 @@ class UserIngredient(Base):
         UniqueConstraint('user_id', 'name', name='uq_user_ingredient'),
     )
 
+
+class PurchasedItem(Base):
+    __tablename__ = "purchased_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(100), nullable=True, default="default")  # Для будущего расширения
+    item_name = Column(String(255), nullable=False, index=True)
+    tab_key = Column(String(50), nullable=False)  # 'tomorrow', 'week', 'month'
+    purchased = Column(Integer, nullable=False, default=1)  # 1 = purchased, 0 = not purchased
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Уникальный индекс для комбинации user_id, item_name и tab_key
+    __table_args__ = (
+        UniqueConstraint('user_id', 'item_name', 'tab_key', name='uq_purchased_item'),
+    )
+

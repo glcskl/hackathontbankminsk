@@ -7,7 +7,7 @@ from datetime import date, datetime
 import os
 
 from database import get_db, init_db
-from models import Recipe, Ingredient, Step, Review, MenuPlan, MenuPlanAdditional, UserIngredient
+from models import Recipe, Ingredient, Step, Review, MenuPlan, MenuPlanAdditional, UserIngredient, PurchasedItem
 from schemas import (
     RecipeResponse,
     RecipeListItem,
@@ -18,6 +18,8 @@ from schemas import (
     MenuPlanResponse,
     UserIngredientCreate,
     UserIngredientResponse,
+    PurchasedItemCreate,
+    PurchasedItemResponse,
 )
 
 app = FastAPI(
@@ -626,6 +628,124 @@ async def delete_user_ingredient(
     db.commit()
     
     return {"message": "User ingredient deleted successfully"}
+
+
+# ========== PurchasedItem Endpoints ==========
+
+@app.get("/api/purchased-items", response_model=List[PurchasedItemResponse])
+async def get_purchased_items(
+    user_id: Optional[str] = Query("default", description="ID пользователя"),
+    tab_key: Optional[str] = Query(None, description="Фильтр по вкладке (tomorrow/week/month)"),
+    db: Session = Depends(get_db)
+):
+    """Получить список купленных продуктов"""
+    query = db.query(PurchasedItem).filter(
+        PurchasedItem.user_id == user_id,
+        PurchasedItem.purchased == 1
+    )
+    
+    if tab_key:
+        query = query.filter(PurchasedItem.tab_key == tab_key)
+    
+    items = query.all()
+    return items
+
+
+@app.post("/api/purchased-items", response_model=PurchasedItemResponse)
+async def toggle_purchased_item(
+    item: PurchasedItemCreate,
+    db: Session = Depends(get_db)
+):
+    """Создать или обновить статус купленного продукта"""
+    user_id = item.user_id or "default"
+    
+    # Ищем существующую запись
+    existing = db.query(PurchasedItem).filter(
+        PurchasedItem.user_id == user_id,
+        PurchasedItem.item_name == item.item_name,
+        PurchasedItem.tab_key == item.tab_key
+    ).first()
+    
+    if existing:
+        # Обновляем существующую
+        existing.purchased = item.purchased
+        existing.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(existing)
+        return existing
+    else:
+        # Создаем новую
+        new_item = PurchasedItem(
+            user_id=user_id,
+            item_name=item.item_name,
+            tab_key=item.tab_key,
+            purchased=item.purchased
+        )
+        db.add(new_item)
+        db.commit()
+        db.refresh(new_item)
+        return new_item
+
+
+@app.post("/api/purchased-items/batch", response_model=List[PurchasedItemResponse])
+async def save_purchased_items_batch(
+    items: List[PurchasedItemCreate],
+    user_id: Optional[str] = Query("default", description="ID пользователя"),
+    db: Session = Depends(get_db)
+):
+    """Сохранить несколько купленных продуктов за раз"""
+    result = []
+    for item in items:
+        current_user_id = item.user_id or user_id
+        
+        # Ищем существующую запись
+        existing = db.query(PurchasedItem).filter(
+            PurchasedItem.user_id == current_user_id,
+            PurchasedItem.item_name == item.item_name,
+            PurchasedItem.tab_key == item.tab_key
+        ).first()
+        
+        if existing:
+            # Обновляем существующую
+            existing.purchased = item.purchased
+            existing.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(existing)
+            result.append(existing)
+        else:
+            # Создаем новую
+            new_item = PurchasedItem(
+                user_id=current_user_id,
+                item_name=item.item_name,
+                tab_key=item.tab_key,
+                purchased=item.purchased
+            )
+            db.add(new_item)
+            db.commit()
+            db.refresh(new_item)
+            result.append(new_item)
+    
+    return result
+
+
+@app.delete("/api/purchased-items")
+async def clear_purchased_items(
+    user_id: Optional[str] = Query("default", description="ID пользователя"),
+    tab_key: Optional[str] = Query(None, description="Фильтр по вкладке (tomorrow/week/month)"),
+    db: Session = Depends(get_db)
+):
+    """Удалить все купленные продукты (или для конкретной вкладки)"""
+    query = db.query(PurchasedItem).filter(
+        PurchasedItem.user_id == user_id
+    )
+    
+    if tab_key:
+        query = query.filter(PurchasedItem.tab_key == tab_key)
+    
+    query.delete()
+    db.commit()
+    
+    return {"message": "Purchased items deleted successfully"}
 
 
 if __name__ == "__main__":
