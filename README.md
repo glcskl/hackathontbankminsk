@@ -1,117 +1,97 @@
-# Хакатон: Template Repository
+This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-Добро пожаловать в шаблонный репозиторий хакатона!  
-Здесь вы будете разрабатывать своё решение и публиковать итоговый код.
+# Getting Started
 
----
+> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
-## Проверка задания
+## Step 1: Start Metro
 
-⚠️ **Мы проверяем решение только из ветки `solution`, если в вашем README не указано иное.**
+First, you will need to run **Metro**, the JavaScript build tool for React Native.
 
-⚠️ **Ветка `master` недоступна для изменений участниками из-за технических особенностей платформы Т-Образования. Права на добавление коммитов в `master` есть только у наших преподавателей и жюри, поэтому в рамках хакатона мы её не используем.**
+To start the Metro dev server, run the following command from the root of your React Native project:
 
-Убедитесь, что:
-- финальная версия корректно смержена в `solution`;
-- проект собирается и запускается без ошибок;
-- в ветке `solution` есть README-файл с актуальным описанием того, как запустить проект.
-
----
-
-## Задание
-
-### Требуется реализовать приложение со следующими функциями:
-
-### **1. Каталог рецептов**
- Пользователь может просматривать готовые рецепты со списком ингредиентов и шагами приготовления, а также добавлять собственные  рецепты в каталог
-
-### **2. Планирование меню**
- Приложение позволяет составлять меню на период от одного дня до месяца. Для каждого блюда можно указать количество порций и распределить его по приёмам пищи
-
-### **3. Генерация списка покупок**
- На основании выбранного меню приложение автоматически формирует список необходимых продуктов, учитывая количество порций.
-
-### **4. Учёт запасов**
- Пользователь может отметить продукты, которые уже есть дома. Приложение учитывает эту информацию, чтобы убрать лишние позиции
-
-### **5. Подбор рецептов**
- Пользователь указывает, какие продукты есть в наличии, а приложение предлагает блюда, которые можно приготовить из доступных ингредиентов
-
----
-
-## Как работать с репозиторием
-
-Чтобы обеспечить чистую историю и удобную работу в команде, соблюдайте следующий workflow.
-
-### Ветку `master` не используем
-
-Ветка `master` защищена — прямые `push` запрещены. А влить *Merge Request* туда могут только члены жюри.
-
-### В качестве основной ветки вместо `master` рекомендуем использовать ветку `solution`
-
-Эту ветку необходимо создать самостоятельно.
-
----
-
-## Как склонировать проект
-
-Вы можете использовать **HTTPS** или **SSH**.  
-Ниже примеры команд (замените URL на URL своего репозитория).
-
-### **Клонирование через HTTPS**
 ```sh
-git clone https://gitlab.education.tbank.ru/hakaton-minsk-2025/template/solution.git
+# Using npm
+npm start
+
+# OR using Yarn
+yarn start
 ```
 
-### **Клонирование через SSH**
+## Step 2: Build and run your app
+
+With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+
+### Android
+
 ```sh
-git clone git@gitlab.education.tbank.ru:hakaton-minsk-2025/template/solution.git
-```
-Не забываем предварительно добавить свои SSH-ключи в настройках аккаунта GitLab.
+# Using npm
+npm run android
 
-### Создаём ветки для задач
-
-Примеры именования:
-
-```
-feature/menu-planning
-feature/recipes-catalog
-bugfix/shopping-list-duplicates
-refactor/storage-module
+# OR using Yarn
+yarn android
 ```
 
-### Основные git-команды
+### iOS
 
-**1. Создать новую ветку:**
+For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+
+The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+
 ```sh
-git checkout -b <branch-name>
+bundle install
 ```
 
-**2. Посмотреть список веток:**
+Then, and every time you update your native dependencies, run:
+
 ```sh
-git branch
+bundle exec pod install
 ```
 
-**3. Зафиксировать изменения:**
+For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+
 ```sh
-git add .
-git commit -m "описание изменений"
+# Using npm
+npm run ios
+
+# OR using Yarn
+yarn ios
 ```
 
-**4. Отправить ветку на сервер:**
-```sh
-git push -u origin <branch-name>
-```
+If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
-### Создание Merge Request
+This is one way to run your app — you can also build it directly from Android Studio or Xcode.
 
-После завершения работы:
+## Step 3: Modify your app
 
-1. Пушите свою ветку.  
-2. Открываете *Merge Request* в GitLab: `<branch-name>` → `solution`.
-    > ⚠️ **Важно:** Если при создании *Merge Request* в списке *target branch* вы видите только `master`, но нет вашей ветки с решением — обратите внимание на репозиторий, в котором вы выбираете ветку для вливания изменений. Зачастую GitLab по умолчанию предлагает использовать репозиторий-шаблон, из которого был создан ваш проект, поэтому не забудьте переключиться на свой репозиторий в выпадающем меню.
-3. Добавляете краткое описание изменений.  
-4. Ждёте ревью и апрув от своих сокомандников.  
-5. После одобрения MR мержится в `solution`.
+Now that you have successfully run the app, let's make changes!
 
----
+Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+
+When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+
+- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
+- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+
+## Congratulations! :tada:
+
+You've successfully run and modified your React Native App. :partying_face:
+
+### Now what?
+
+- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
+- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+
+# Troubleshooting
+
+If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+
+# Learn More
+
+To learn more about React Native, take a look at the following resources:
+
+- [React Native Website](https://reactnative.dev) - learn more about React Native.
+- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
+- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
+- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
+- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
