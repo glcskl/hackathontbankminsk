@@ -1,29 +1,17 @@
 {
   "name": "vibecoders-solution",
   "version": "1.0.0",
-  "main": "node_modules/expo/AppEntry.js",
+  "private": true,
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
     "docker:up": "docker-compose up --build",
     "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
-  },
-  "dependencies": {
-    "expo": "~54.0.0",
-    "expo-asset": "~12.0.10",
-    "expo-status-bar": "~3.0.8",
-    "react": "19.1.0",
-    "react-native": "0.81.5"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.25.2",
-    "@expo/ngrok": "^4.1.3",
-    "@types/react": "~19.1.10",
-    "babel-preset-expo": "^54.0.7",
-    "typescript": "^5.3.3"
-  },
-  "private": true
+    "docker:logs": "docker-compose logs -f",
+    "docker:logs:expo": "docker-compose logs -f expo",
+    "docker:logs:postgres": "docker-compose logs -f postgres",
+    "frontend:install": "cd frontend && npm install --legacy-peer-deps",
+    "frontend:start": "cd frontend && npm start",
+    "frontend:ios": "cd frontend && npm run ios",
+    "frontend:android": "cd frontend && npm run android",
+    "frontend:web": "cd frontend && npm run web"
+  }
 }

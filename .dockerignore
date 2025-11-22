@@ -1,7 +1,7 @@
-node_modules
-.expo
-.expo-shared
-dist
+frontend/node_modules
+frontend/.expo
+frontend/.expo-shared
+frontend/dist
 npm-debug.*
 *.jks
 *.p8
@@ -9,7 +9,7 @@ npm-debug.*
 *.key
 *.mobileprovision
 *.orig.*
-web-build
+frontend/web-build
 .DS_Store
 .git
 .gitignore
@@ -20,4 +20,7 @@ README.md
 coverage
 .vscode
 .idea
+docker-compose.yml
+Dockerfile
+.dockerignore
 
