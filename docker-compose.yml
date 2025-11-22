@@ -18,11 +18,32 @@ services:
     environment:
       - EXPO_NO_DOTENV=1
       - NODE_ENV=development
+      - DATABASE_URL=postgresql://app:password@postgres:5432/vibecoders_db
     stdin_open: true
     tty: true
     restart: unless-stopped
+    depends_on:
+      - postgres
     networks:
       - expo-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: vibecoders-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=vibecoders_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - expo-network
+
+volumes:
+  postgres_data:
 
 networks:
   expo-network:
