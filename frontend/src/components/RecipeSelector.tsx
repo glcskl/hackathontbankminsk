@@ -18,7 +18,7 @@ export function RecipeSelector({ recipes, onSelect, onClose, mealType }: RecipeS
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Все');
 
-  const categories = ['Все', 'Завтрак', 'Обед', 'Ужин', 'Десерт'];
+  const categories = ['Все', 'Завтрак', 'Обед', 'Ужин', 'Десерт', 'Закуски'];
 
   const filteredRecipes = recipes.filter(recipe => {
     const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase());

@@ -15,7 +15,7 @@ import { colors } from './src/constants/colors';
 import { Recipe, Review, MealPlan } from './src/types';
 import * as api from './src/services/api';
 
-const categories = ['Все', 'Мои рецепты', 'Завтрак', 'Обед', 'Ужин', 'Десерт'];
+const categories = ['Все', 'Мои рецепты', 'Завтрак', 'Обед', 'Ужин', 'Десерт', 'Закуски'];
 
 // Адаптеры для преобразования данных между API и фронтендом
 function adaptApiRecipeToFrontend(apiRecipe: api.Recipe): Recipe {

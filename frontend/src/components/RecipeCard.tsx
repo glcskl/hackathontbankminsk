@@ -15,6 +15,7 @@ export function RecipeCard({ title, category, cookTime, servings, image, rating,
     'Обед': { bg: colors.black, text: colors.primary },
     'Ужин': { bg: colors.primary, text: colors.black },
     'Десерт': { bg: colors.black, text: colors.primary },
+    'Закуски': { bg: colors.primary, text: colors.black },
   };
 
   const categoryStyle = categoryColors[category] || { bg: colors.primary, text: colors.black };

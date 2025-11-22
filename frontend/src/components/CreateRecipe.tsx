@@ -23,7 +23,7 @@ interface CreateRecipeProps {
   onSuccess: () => void;
 }
 
-const CATEGORIES = ['Завтрак', 'Обед', 'Ужин', 'Десерт'];
+const CATEGORIES = ['Завтрак', 'Обед', 'Ужин', 'Десерт', 'Закуски'];
 const UNITS = ['г', 'кг', 'мл', 'л', 'шт', 'ст.л.', 'ч.л.', 'стакан'];
 
 export function CreateRecipe({ visible, onClose, onSuccess }: CreateRecipeProps) {
