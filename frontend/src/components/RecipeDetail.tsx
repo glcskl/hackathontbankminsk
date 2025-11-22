@@ -276,7 +276,7 @@ export function RecipeDetail({ recipe, onClose, userIngredients = new Map(), onA
 
                   <TabsContent value="steps">
                     <View style={styles.stepsHeader}>
-                      <Text style={styles.tabTitle}>Пошаговое приготовление</Text>
+                      <Text style={styles.stepsTitle}>Пошаговое приготовление</Text>
                       <Text style={styles.stepsCounter}>
                         Шаг {currentStep + 1} из {recipe.steps.length}
                       </Text>
@@ -646,9 +646,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  stepsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.black,
+    flex: 1,
+  },
   stepsCounter: {
     fontSize: 14,
     color: colors.textSecondary,
+    flexShrink: 0,
+    marginLeft: 12,
   },
   stepContent: {
     gap: 16,
