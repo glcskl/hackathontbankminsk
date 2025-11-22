@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
 
@@ -10,10 +10,10 @@ interface TabNavigationProps {
 
 export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   const tabs = [
-    { id: 'recipes' as const, label: 'Рецепты', icon: 'book-outline' },
-    { id: 'menu' as const, label: 'Мое меню', icon: 'calendar-outline' },
-    { id: 'ingredients' as const, label: 'Ингредиенты', icon: 'basket-outline' },
-    { id: 'shopping' as const, label: 'Список покупок', icon: 'cart-outline' },
+    { id: 'recipes' as const, icon: 'book-outline' },
+    { id: 'menu' as const, icon: 'calendar-outline' },
+    { id: 'ingredients' as const, icon: 'basket-outline' },
+    { id: 'shopping' as const, icon: 'cart-outline' },
   ];
 
   return (
@@ -29,17 +29,9 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
         >
           <Ionicons
             name={tab.icon as any}
-            size={20}
-            color={activeTab === tab.id ? colors.black : colors.textSecondary}
+            size={24}
+            color={activeTab === tab.id ? colors.primary : colors.textSecondary}
           />
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === tab.id ? styles.tabTextActive : styles.tabTextInactive,
-            ]}
-          >
-            {tab.label}
-          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -50,40 +42,28 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: colors.white,
-    padding: 6,
-    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 20,
     gap: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 8,
   },
   tab: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 12,
   },
   tabActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: 'transparent',
   },
   tabInactive: {
     backgroundColor: 'transparent',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  tabTextActive: {
-    color: colors.black,
-  },
-  tabTextInactive: {
-    color: colors.textSecondary,
   },
 });
 

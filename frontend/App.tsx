@@ -233,22 +233,6 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerIcon}>
-            <Ionicons name="restaurant" size={28} color={colors.black} />
-          </View>
-          <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>T-Meal</Text>
-            <Text style={styles.headerSubtitle}>Планируйте меню и готовьте с удовольствием</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.tabNavigationContainer}>
-        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-      </View>
-
       <View style={styles.content}>
         {activeTab === 'recipes' ? (
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -330,6 +314,10 @@ export default function App() {
           onAddReview={handleAddReview}
         />
       )}
+
+      <View style={styles.bottomNavigationContainer}>
+        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      </View>
     </SafeAreaView>
   );
 }
@@ -339,52 +327,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.grayBg,
   },
-  header: {
-    backgroundColor: colors.black,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerText: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.white,
-    marginBottom: 2,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  tabNavigationContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: colors.grayBg,
-  },
   content: {
     flex: 1,
+    paddingBottom: 80,
+  },
+  bottomNavigationContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 20,
+    backgroundColor: colors.grayBg,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray300,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 100,
   },
   searchContainer: {
     marginBottom: 16,

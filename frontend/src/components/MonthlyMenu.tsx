@@ -12,7 +12,7 @@ interface MonthlyMenuProps {
 }
 
 export function MonthlyMenu({ recipes, onMenuPlanChange }: MonthlyMenuProps) {
-  const [currentWeek, setCurrentWeek] = useState(0);
+  const [currentWeek, setCurrentWeek] = useState(0); // 0 = текущая неделя, 1 = следующая
   const [menuPlan, setMenuPlan] = useState<Record<string, MealPlan>>({});
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ day: string; mealType: keyof MealPlan | 'additional'; additionalIndex?: number } | null>(null);
@@ -29,41 +29,56 @@ export function MonthlyMenu({ recipes, onMenuPlanChange }: MonthlyMenuProps) {
 
   const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-  const getWeeksInMonth = () => {
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+  const getCurrentAndNextWeeks = () => {
     const weeks: Date[][] = [];
     
-    let currentDate = new Date(firstDay);
-    currentDate.setDate(currentDate.getDate() - ((currentDate.getDay() + 6) % 7));
+    // Находим понедельник текущей недели
+    const todayDate = new Date(today);
+    const dayOfWeek = (todayDate.getDay() + 6) % 7; // Понедельник = 0
+    const mondayOfCurrentWeek = new Date(todayDate);
+    mondayOfCurrentWeek.setDate(todayDate.getDate() - dayOfWeek);
+    mondayOfCurrentWeek.setHours(0, 0, 0, 0);
     
-    while (currentDate <= lastDay || weeks.length === 0) {
-      const week: Date[] = [];
-      for (let i = 0; i < 7; i++) {
-        week.push(new Date(currentDate));
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      weeks.push(week);
-      if (currentDate.getMonth() > currentMonth) break;
+    // Текущая неделя
+    const currentWeek: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(mondayOfCurrentWeek);
+      date.setDate(mondayOfCurrentWeek.getDate() + i);
+      currentWeek.push(date);
     }
+    weeks.push(currentWeek);
+    
+    // Следующая неделя
+    const nextWeek: Date[] = [];
+    const mondayOfNextWeek = new Date(mondayOfCurrentWeek);
+    mondayOfNextWeek.setDate(mondayOfCurrentWeek.getDate() + 7);
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(mondayOfNextWeek);
+      date.setDate(mondayOfNextWeek.getDate() + i);
+      nextWeek.push(date);
+    }
+    weeks.push(nextWeek);
     
     return weeks;
   };
 
-  const weeks = getWeeksInMonth();
+  const weeks = getCurrentAndNextWeeks();
   
-  const currentWeekDays = (weeks[currentWeek] || []).filter(date => {
-    const dateOnly = new Date(date);
-    dateOnly.setHours(0, 0, 0, 0);
-    return dateOnly >= today;
-  });
+  // Показываем все дни недели
+  const currentWeekDays = weeks[currentWeek] || [];
 
   const getWeekDateRange = () => {
     if (currentWeekDays.length === 0) return '';
     const firstDay = currentWeekDays[0];
     const lastDay = currentWeekDays[currentWeekDays.length - 1];
     
-    return `${firstDay.getDate()} ${monthNames[firstDay.getMonth()].slice(0, 3).toLowerCase()} — ${lastDay.getDate()} ${monthNames[lastDay.getMonth()].slice(0, 3).toLowerCase()}`;
+    const firstMonth = monthNames[firstDay.getMonth()].slice(0, 3).toLowerCase();
+    const lastMonth = monthNames[lastDay.getMonth()].slice(0, 3).toLowerCase();
+    
+    if (firstDay.getMonth() === lastDay.getMonth()) {
+      return `${firstDay.getDate()} — ${lastDay.getDate()} ${firstMonth}`;
+    }
+    return `${firstDay.getDate()} ${firstMonth} — ${lastDay.getDate()} ${lastMonth}`;
   };
 
   const handleAddMeal = (day: string, mealType: keyof MealPlan | 'additional', additionalIndex?: number) => {
@@ -135,14 +150,15 @@ export function MonthlyMenu({ recipes, onMenuPlanChange }: MonthlyMenuProps) {
     handleAddMeal(day, 'additional');
   };
 
-  const getMealLabel = (mealType: keyof MealPlan) => {
-    const labels = {
+  const getMealLabel = (mealType: keyof MealPlan | 'additional'): string => {
+    const labels: Record<string, string> = {
       breakfast: 'Завтрак',
       lunch: 'Обед',
       dinner: 'Ужин',
-      extra: 'Десерт'
+      extra: 'Десерт',
+      additional: 'Доп. блюдо'
     };
-    return labels[mealType];
+    return labels[mealType] || 'Блюдо';
   };
 
   const isToday = (date: Date) => {
@@ -154,35 +170,51 @@ export function MonthlyMenu({ recipes, onMenuPlanChange }: MonthlyMenuProps) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>
-            {monthNames[currentMonth]} {currentYear}
-          </Text>
+          <View>
+            <Text style={styles.headerTitle}>
+              {monthNames[currentMonth]} {currentYear}
+            </Text>
+            <Text style={styles.headerSubtitle}>{getWeekDateRange()}</Text>
+          </View>
           <View style={styles.headerButtons}>
             <TouchableOpacity
               onPress={() => setCurrentWeek(Math.max(0, currentWeek - 1))}
               disabled={currentWeek === 0}
               style={[styles.navButton, currentWeek === 0 && styles.navButtonDisabled]}
             >
-              <Ionicons name="chevron-back" size={20} color={colors.primary} />
+              <Ionicons name="chevron-back" size={22} color={currentWeek === 0 ? colors.gray300 : colors.black} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setCurrentWeek(Math.min(weeks.length - 1, currentWeek + 1))}
               disabled={currentWeek === weeks.length - 1}
               style={[styles.navButton, currentWeek === weeks.length - 1 && styles.navButtonDisabled]}
             >
-              <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+              <Ionicons name="chevron-forward" size={22} color={currentWeek === weeks.length - 1 ? colors.gray300 : colors.black} />
             </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerInfoText}>
-            Неделя {currentWeek + 1} из {weeks.length}
+        <View style={styles.weekIndicator}>
+          <View style={styles.weekIndicatorContainer}>
+            {weeks.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.weekDot,
+                  index === currentWeek && styles.weekDotActive
+                ]}
+              />
+            ))}
+          </View>
+          <Text style={styles.weekIndicatorText}>
+            {currentWeek === 0 ? 'Текущая неделя' : 'Следующая неделя'}
           </Text>
-          <Text style={styles.headerInfoText}>•</Text>
-          <Text style={styles.headerInfoText}>{getWeekDateRange()}</Text>
         </View>
       </View>
 
@@ -201,19 +233,34 @@ export function MonthlyMenu({ recipes, onMenuPlanChange }: MonthlyMenuProps) {
                 !isCurrentMonth(date) && styles.dayCardOtherMonth
               ]}
             >
-              <View style={styles.dayHeader}>
-                <View>
-                  <Text style={styles.dayOfWeek}>{daysOfWeek[dayOfWeekIndex]}</Text>
-                  <Text style={styles.dayNumber}>{date.getDate()}</Text>
-                  <Text style={styles.dayMonth}>
-                    {monthNames[date.getMonth()].slice(0, 3).toLowerCase()}
-                  </Text>
-                </View>
-                {isToday(date) && (
-                  <View style={styles.todayBadge}>
-                    <Text style={styles.todayBadgeText}>Сегодня</Text>
+              <View style={[
+                styles.dayHeader,
+                isToday(date) && styles.dayHeaderToday
+              ]}>
+                <View style={styles.dayHeaderContent}>
+                  <View style={styles.dayInfoRow}>
+                    <Text style={[
+                      styles.dayOfWeek,
+                      isToday(date) && styles.dayOfWeekToday
+                    ]}>
+                      {daysOfWeek[dayOfWeekIndex]}
+                    </Text>
+                    <Text style={[
+                      styles.dayNumber,
+                      isToday(date) && styles.dayNumberToday
+                    ]}>
+                      {date.getDate()}
+                    </Text>
+                    {!isCurrentMonth(date) && (
+                      <Text style={styles.dayMonth}>
+                        {monthNames[date.getMonth()].slice(0, 3).toLowerCase()}
+                      </Text>
+                    )}
                   </View>
-                )}
+                  {isToday(date) && (
+                    <View style={styles.todayIndicator} />
+                  )}
+                </View>
               </View>
 
               <View style={styles.mealsList}>
@@ -283,7 +330,7 @@ export function MonthlyMenu({ recipes, onMenuPlanChange }: MonthlyMenuProps) {
             setSelectorOpen(false);
             setSelectedSlot(null);
           }}
-          mealType={getMealLabel(selectedSlot.mealType === 'additional' ? 'extra' : selectedSlot.mealType as keyof MealPlan)}
+          mealType={getMealLabel(selectedSlot.mealType)}
         />
       )}
     </ScrollView>
@@ -293,60 +340,96 @@ export function MonthlyMenu({ recipes, onMenuPlanChange }: MonthlyMenuProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.grayBg,
   },
   content: {
     padding: 16,
+    paddingBottom: 100,
     gap: 16,
   },
   header: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '700',
     color: colors.black,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
   headerButtons: {
     flexDirection: 'row',
     gap: 8,
+    backgroundColor: colors.grayBg,
+    borderRadius: 12,
+    padding: 4,
   },
   navButton: {
-    backgroundColor: colors.black,
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: 8,
     padding: 8,
+    minWidth: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   navButtonDisabled: {
-    opacity: 0.3,
+    opacity: 0.4,
   },
-  headerInfo: {
-    flexDirection: 'row',
+  weekIndicator: {
+    alignItems: 'center',
     gap: 8,
+  },
+  weekIndicatorContainer: {
+    flexDirection: 'row',
+    gap: 6,
     alignItems: 'center',
   },
-  headerInfoText: {
-    fontSize: 14,
+  weekDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.gray300,
+  },
+  weekDotActive: {
+    width: 24,
+    backgroundColor: colors.primary,
+  },
+  weekIndicatorText: {
+    fontSize: 12,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   daysList: {
-    gap: 12,
+    gap: 24,
   },
   dayCard: {
     backgroundColor: colors.white,
     borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: colors.gray300,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -354,63 +437,94 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   dayCardToday: {
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 6,
   },
   dayCardOtherMonth: {
     opacity: 0.5,
   },
   dayHeader: {
-    backgroundColor: colors.black,
-    padding: 16,
+    backgroundColor: colors.grayBg,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.gray200,
+  },
+  dayHeaderToday: {
+    backgroundColor: colors.primary,
+    borderBottomColor: colors.black,
+    borderBottomWidth: 3,
+  },
+  dayHeaderContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  dayInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 14,
+  },
   dayOfWeek: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    minWidth: 32,
+  },
+  dayOfWeekToday: {
+    color: colors.black,
+    fontWeight: '800',
     fontSize: 14,
-    color: colors.white,
-    marginBottom: 4,
   },
   dayNumber: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.white,
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.black,
+    lineHeight: 32,
+  },
+  dayNumberToday: {
+    color: colors.black,
+    fontSize: 30,
   },
   dayMonth: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  todayBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  todayBadgeText: {
     fontSize: 12,
+    color: colors.textSecondary,
     fontWeight: '600',
-    color: colors.black,
+    textTransform: 'lowercase',
+    marginLeft: 4,
+  },
+  todayIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.black,
   },
   mealsList: {
     padding: 16,
-    gap: 8,
+    gap: 10,
   },
   addAdditionalButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    padding: 12,
+    padding: 14,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: colors.textLight,
-    borderRadius: 12,
+    borderColor: colors.gray300,
+    borderRadius: 14,
+    backgroundColor: colors.grayBg,
   },
   addAdditionalText: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
 });
 
