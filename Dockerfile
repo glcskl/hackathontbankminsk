@@ -24,6 +24,7 @@ COPY frontend/ .
 # Открытие портов для Expo
 EXPOSE 8081 19000 19001 19002
 
-# Запуск Expo в туннельном режиме
-CMD ["npx", "expo", "start", "--tunnel"]
-
+# Запуск Expo в LAN режиме
+# --host tunnel позволяет использовать туннель если LAN не работает
+# Но сначала пробуем LAN режим
+CMD ["npx", "expo", "start", "--lan"]

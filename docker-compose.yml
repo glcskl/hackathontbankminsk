@@ -16,7 +16,8 @@ services:
       - DEBUG=True
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - expo-network
 
@@ -26,10 +27,10 @@ services:
       dockerfile: Dockerfile
     container_name: vibecoders-expo
     ports:
-      - "8081:8081"   # Metro bundler
-      - "19000:19000" # Expo dev server
-      - "19001:19001" # Expo dev server (WebSocket)
-      - "19002:19002" # Expo dev server (WebSocket)
+      - "0.0.0.0:8081:8081"   # Metro bundler - слушает на всех интерфейсах
+      - "0.0.0.0:19000:19000" # Expo dev server
+      - "0.0.0.0:19001:19001" # Expo dev server (WebSocket)
+      - "0.0.0.0:19002:19002" # Expo dev server (WebSocket)
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -39,12 +40,18 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://app:password@postgres:5432/vibecoders_db
       - API_URL=http://backend:8000
+      - EXPO_PUBLIC_API_URL=http://10.137.191.81:8000
+      - REACT_NATIVE_PACKAGER_HOSTNAME=10.137.191.81
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - EXPO_USE_FAST_RESOLVER=1
     stdin_open: true
     tty: true
     restart: unless-stopped
     depends_on:
-      - postgres
-      - backend
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_started
     networks:
       - expo-network
 
@@ -60,6 +67,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d vibecoders_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - expo-network
 
