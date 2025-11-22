@@ -1,106 +1,74 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# VibeCoders Solution
 
-# Getting Started
+Мобильное приложение для управления рецептами, планирования меню и составления списков покупок.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 🏗️ Архитектура проекта
 
-## Step 1: Start Metro
+Проект построен на микросервисной архитектуре с использованием Docker Compose для оркестрации сервисов.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### Компоненты системы
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+1. **Frontend (React Native + Expo)**
+   - Мобильное приложение для iOS и Android
+   - Использует Expo для разработки и сборки
+   - TypeScript для типобезопасности
+   - Компонентная архитектура с разделением на UI и бизнес-логику
 
-```sh
-# Using npm
-npm start
+2. **Backend (FastAPI + Python)**
+   - RESTful API на FastAPI
+   - SQLAlchemy ORM для работы с базой данных
+   - CORS middleware для работы с мобильным приложением
 
-# OR using Yarn
-yarn start
+3. **База данных (PostgreSQL)**
+   - Реляционная база данных для хранения всех данных
+   - Автоматическая инициализация схемы при первом запуске
+   - Миграции через SQLAlchemy
+
+### Технологический стек
+
+**Frontend:**
+- React Native 0.81.5
+- Expo ~54.0.0
+- TypeScript
+- React 19.1.0
+
+**Backend:**
+- Python 3.x
+- FastAPI
+- SQLAlchemy
+- PostgreSQL 16
+
+**Инфраструктура:**
+- Docker & Docker Compose
+- PostgreSQL (контейнер)
+
+## 🚀 Быстрый старт
+
+### Предварительные требования
+
+- Docker и Docker Compose установлены
+- Git для клонирования репозитория
+
+### Запуск через Docker Compose
+
+Самый простой способ запустить весь проект:
+
+```bash
+# Клонировать репозиторий
+git clone <repository-url>
+cd vibecoders-solution
+
+# Запустить все сервисы
+docker-compose up --build
 ```
 
-## Step 2: Build and run your app
+### Автоматическое определение IP адреса
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Docker Setup
-
-Проект использует Docker Compose для запуска всех сервисов (backend, frontend, database).
-
-## Автоматическое определение IP адреса
-
-IP адрес хоста определяется автоматически при запуске через скрипты `docker-up.sh` (bash) или `docker-up.fish` (fish shell).
-
-### Использование:
+Для корректной работы Expo с мобильными устройствами необходимо правильно настроить IP адрес хоста. Проект включает скрипты для автоматического определения IP:
 
 **Bash/Zsh:**
 ```bash
 ./docker-up.sh up --build
-# или через npm
-npm run docker:up
 ```
 
 **Fish shell:**
@@ -114,21 +82,57 @@ export HOST_IP=your.ip.address.here
 docker-compose up --build
 ```
 
-## Доступные команды:
+### Доступ к сервисам
 
-- `npm run docker:up` - запустить все сервисы
-- `npm run docker:down` - остановить все сервисы
-- `npm run docker:logs` - посмотреть логи всех сервисов
-- `npm run docker:logs:expo` - логи только Expo
-- `npm run docker:logs:backend` - логи только бэкенда
-- `npm run docker:logs:postgres` - логи только PostgreSQL
+После запуска сервисы будут доступны по следующим адресам:
 
-# Learn More
+- **Backend API**: http://localhost:8000
+- **Expo Dev Server**: http://localhost:19000
+- **Metro Bundler**: http://localhost:8081
+- **PostgreSQL**: localhost:5432
 
-To learn more about React Native, take a look at the following resources:
+## 📁 Структура проекта
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+```
+vibecoders-solution/
+├── backend/                 # Backend сервис (FastAPI)
+│   ├── main.py             # Основной файл приложения
+│   ├── models.py           # SQLAlchemy модели
+│   ├── schemas.py          # Pydantic схемы для валидации
+│   ├── database.py         # Настройка подключения к БД
+│   ├── seed_data.py        # Скрипт для заполнения тестовыми данными
+│   ├── requirements.txt    # Python зависимости
+│   └── Dockerfile          # Docker образ для backend
+│
+├── frontend/               # Frontend приложение (React Native)
+│   ├── App.tsx             # Главный компонент приложения
+│   ├── src/
+│   │   ├── components/     # React компоненты
+│   │   │   ├── RecipeCard.tsx
+│   │   │   ├── RecipeDetail.tsx
+│   │   │   ├── MonthlyMenu.tsx
+│   │   │   ├── IngredientsTab.tsx
+│   │   │   ├── ShoppingListTab.tsx
+│   │   │   └── ...
+│   │   ├── services/       # API клиенты
+│   │   │   └── api.ts
+│   │   ├── types/          # TypeScript типы
+│   │   │   └── index.ts
+│   │   └── constants/      # Константы
+│   │       └── colors.ts
+│   ├── package.json        # Node.js зависимости
+│   └── Dockerfile          # Docker образ для frontend
+│
+├── docker-compose.yml      # Конфигурация Docker Compose
+├── Dockerfile             # Docker образ для Expo
+└── README.md              # Документация
+```
+
+## 👥 Команда
+
+VibeCoders Solution - проект команды VibeCoders
+Чуприс Матвей
+Тышко Тимофей
+Милашевский Захар
+Токарь Глеб
+Проскочилов Максим
