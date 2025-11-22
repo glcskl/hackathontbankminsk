@@ -1,0 +1,452 @@
+from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from typing import List, Optional
+from datetime import date, datetime
+import os
+
+from database import get_db, init_db
+from models import Recipe, Ingredient, Step, Review, MenuPlan
+from schemas import (
+    RecipeResponse,
+    RecipeListItem,
+    RecipeCreate,
+    ReviewCreate,
+    ReviewResponse,
+    MenuPlanCreate,
+    MenuPlanResponse,
+)
+
+app = FastAPI(
+    title="VibeCoders API",
+    description="Backend API for VibeCoders Solution",
+    version="1.0.0"
+)
+
+# CORS middleware для работы с Expo
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # В продакшене указать конкретные домены
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Инициализация БД при старте приложения"""
+    try:
+        init_db()
+        print("База данных инициализирована")
+        
+        # Заполняем БД тестовыми данными, если она пустая
+        from sqlalchemy.orm import Session
+        from database import SessionLocal
+        
+        db = SessionLocal()
+        try:
+            recipe_count = db.query(Recipe).count()
+            if recipe_count == 0:
+                print("База данных пустая, заполняем тестовыми данными...")
+                from seed_data import seed_database
+                seed_database()
+                print("Тестовые данные добавлены")
+            else:
+                print(f"В базе данных уже есть {recipe_count} рецептов")
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"Ошибка при инициализации БД: {e}")
+
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Welcome to VibeCoders API",
+        "version": "1.0.0",
+        "status": "running"
+    }
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+
+# ========== Recipe Endpoints ==========
+
+@app.get("/api/recipes", response_model=List[RecipeListItem])
+async def get_recipes(
+    category: Optional[str] = Query(None, description="Фильтр по категории"),
+    search: Optional[str] = Query(None, description="Поисковый запрос"),
+    db: Session = Depends(get_db)
+):
+    """Получить список рецептов с фильтрацией по категории и поиску"""
+    query = db.query(Recipe)
+    
+    # Фильтр по категории
+    if category and category != "Все":
+        query = query.filter(Recipe.category == category)
+    
+    # Поиск по названию или ингредиентам
+    if search:
+        search_lower = search.lower()
+        # Поиск по названию
+        query = query.filter(
+            Recipe.title.ilike(f"%{search_lower}%")
+        )
+        # Или поиск по ингредиентам (через подзапрос)
+        ingredient_ids = db.query(Ingredient.recipe_id).filter(
+            Ingredient.name.ilike(f"%{search_lower}%")
+        ).distinct()
+        query = query.filter(
+            (Recipe.title.ilike(f"%{search_lower}%")) |
+            (Recipe.id.in_(ingredient_ids))
+        )
+    
+    recipes = query.order_by(Recipe.id).all()
+    
+    # Вычисляем рейтинг для каждого рецепта
+    result = []
+    for recipe in recipes:
+        # Подсчитываем средний рейтинг из отзывов
+        avg_rating = db.query(func.avg(Review.rating)).filter(
+            Review.recipe_id == recipe.id
+        ).scalar()
+        
+        recipe_dict = {
+            "id": recipe.id,
+            "title": recipe.title,
+            "category": recipe.category,
+            "cook_time": recipe.cook_time,
+            "servings": recipe.servings,
+            "image": recipe.image,
+            "calories_per_serving": recipe.calories_per_serving,
+            "rating": float(avg_rating) if avg_rating else None
+        }
+        result.append(RecipeListItem(**recipe_dict))
+    
+    return result
+
+
+@app.get("/api/recipes/{recipe_id}", response_model=RecipeResponse)
+async def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    """Получить детали рецепта по ID"""
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id).first()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    # Вычисляем средний рейтинг
+    avg_rating = db.query(func.avg(Review.rating)).filter(
+        Review.recipe_id == recipe.id
+    ).scalar()
+    
+    # Загружаем связанные данные
+    db.refresh(recipe)
+    
+    recipe_dict = {
+        "id": recipe.id,
+        "title": recipe.title,
+        "category": recipe.category,
+        "cook_time": recipe.cook_time,
+        "servings": recipe.servings,
+        "image": recipe.image,
+        "calories_per_serving": recipe.calories_per_serving,
+        "rating": float(avg_rating) if avg_rating else None,
+        "ingredients": recipe.ingredients,
+        "steps": recipe.steps,
+        "reviews": recipe.reviews
+    }
+    
+    return RecipeResponse(**recipe_dict)
+
+
+@app.post("/api/recipes/{recipe_id}/reviews", response_model=ReviewResponse)
+async def add_review(
+    recipe_id: int,
+    review: ReviewCreate,
+    db: Session = Depends(get_db)
+):
+    """Добавить отзыв к рецепту"""
+    # Проверяем существование рецепта
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id).first()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    # Создаем новый отзыв
+    new_review = Review(
+        recipe_id=recipe_id,
+        author=review.author,
+        rating=review.rating,
+        comment=review.comment,
+        date=review.date,
+        image=review.image
+    )
+    
+    db.add(new_review)
+    db.commit()
+    db.refresh(new_review)
+    
+    return ReviewResponse(
+        id=new_review.id,
+        recipe_id=new_review.recipe_id,
+        author=new_review.author,
+        rating=new_review.rating,
+        comment=new_review.comment,
+        date=new_review.date,
+        image=new_review.image
+    )
+
+
+# ========== MenuPlan Endpoints ==========
+
+@app.get("/api/menu-plans", response_model=List[MenuPlanResponse])
+async def get_menu_plans(
+    start_date: Optional[date] = Query(None, description="Начальная дата"),
+    end_date: Optional[date] = Query(None, description="Конечная дата"),
+    db: Session = Depends(get_db)
+):
+    """Получить меню планы с фильтрацией по дате"""
+    query = db.query(MenuPlan)
+    
+    if start_date:
+        query = query.filter(MenuPlan.date >= start_date)
+    if end_date:
+        query = query.filter(MenuPlan.date <= end_date)
+    
+    menu_plans = query.order_by(MenuPlan.date).all()
+    
+    result = []
+    for plan in menu_plans:
+        plan_dict = {
+            "id": plan.id,
+            "date": plan.date,
+            "user_id": plan.user_id,
+            "breakfast_recipe_id": plan.breakfast_recipe_id,
+            "lunch_recipe_id": plan.lunch_recipe_id,
+            "dinner_recipe_id": plan.dinner_recipe_id,
+            "extra_recipe_id": plan.extra_recipe_id,
+            "breakfast_recipe": None,
+            "lunch_recipe": None,
+            "dinner_recipe": None,
+            "extra_recipe": None
+        }
+        
+        # Загружаем рецепты если они есть
+        if plan.breakfast_recipe:
+            avg_rating = db.query(func.avg(Review.rating)).filter(
+                Review.recipe_id == plan.breakfast_recipe.id
+            ).scalar()
+            plan_dict["breakfast_recipe"] = RecipeListItem(
+                id=plan.breakfast_recipe.id,
+                title=plan.breakfast_recipe.title,
+                category=plan.breakfast_recipe.category,
+                cook_time=plan.breakfast_recipe.cook_time,
+                servings=plan.breakfast_recipe.servings,
+                image=plan.breakfast_recipe.image,
+                calories_per_serving=plan.breakfast_recipe.calories_per_serving,
+                rating=float(avg_rating) if avg_rating else None
+            )
+        
+        if plan.lunch_recipe:
+            avg_rating = db.query(func.avg(Review.rating)).filter(
+                Review.recipe_id == plan.lunch_recipe.id
+            ).scalar()
+            plan_dict["lunch_recipe"] = RecipeListItem(
+                id=plan.lunch_recipe.id,
+                title=plan.lunch_recipe.title,
+                category=plan.lunch_recipe.category,
+                cook_time=plan.lunch_recipe.cook_time,
+                servings=plan.lunch_recipe.servings,
+                image=plan.lunch_recipe.image,
+                calories_per_serving=plan.lunch_recipe.calories_per_serving,
+                rating=float(avg_rating) if avg_rating else None
+            )
+        
+        if plan.dinner_recipe:
+            avg_rating = db.query(func.avg(Review.rating)).filter(
+                Review.recipe_id == plan.dinner_recipe.id
+            ).scalar()
+            plan_dict["dinner_recipe"] = RecipeListItem(
+                id=plan.dinner_recipe.id,
+                title=plan.dinner_recipe.title,
+                category=plan.dinner_recipe.category,
+                cook_time=plan.dinner_recipe.cook_time,
+                servings=plan.dinner_recipe.servings,
+                image=plan.dinner_recipe.image,
+                calories_per_serving=plan.dinner_recipe.calories_per_serving,
+                rating=float(avg_rating) if avg_rating else None
+            )
+        
+        if plan.extra_recipe:
+            avg_rating = db.query(func.avg(Review.rating)).filter(
+                Review.recipe_id == plan.extra_recipe.id
+            ).scalar()
+            plan_dict["extra_recipe"] = RecipeListItem(
+                id=plan.extra_recipe.id,
+                title=plan.extra_recipe.title,
+                category=plan.extra_recipe.category,
+                cook_time=plan.extra_recipe.cook_time,
+                servings=plan.extra_recipe.servings,
+                image=plan.extra_recipe.image,
+                calories_per_serving=plan.extra_recipe.calories_per_serving,
+                rating=float(avg_rating) if avg_rating else None
+            )
+        
+        result.append(MenuPlanResponse(**plan_dict))
+    
+    return result
+
+
+@app.post("/api/menu-plans", response_model=MenuPlanResponse)
+async def save_menu_plan(
+    menu_plan: MenuPlanCreate,
+    db: Session = Depends(get_db)
+):
+    """Создать или обновить меню план"""
+    # Проверяем существование рецептов если они указаны
+    recipe_ids = [
+        menu_plan.breakfast_recipe_id,
+        menu_plan.lunch_recipe_id,
+        menu_plan.dinner_recipe_id,
+        menu_plan.extra_recipe_id
+    ]
+    
+    for recipe_id in recipe_ids:
+        if recipe_id:
+            recipe = db.query(Recipe).filter(Recipe.id == recipe_id).first()
+            if not recipe:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Recipe with id {recipe_id} not found"
+                )
+    
+    # Ищем существующий план на эту дату
+    existing_plan = db.query(MenuPlan).filter(
+        MenuPlan.date == menu_plan.date
+    ).first()
+    
+    if existing_plan:
+        # Обновляем существующий план
+        existing_plan.user_id = menu_plan.user_id
+        existing_plan.breakfast_recipe_id = menu_plan.breakfast_recipe_id
+        existing_plan.lunch_recipe_id = menu_plan.lunch_recipe_id
+        existing_plan.dinner_recipe_id = menu_plan.dinner_recipe_id
+        existing_plan.extra_recipe_id = menu_plan.extra_recipe_id
+        existing_plan.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(existing_plan)
+        plan = existing_plan
+    else:
+        # Создаем новый план
+        new_plan = MenuPlan(
+            date=menu_plan.date,
+            user_id=menu_plan.user_id,
+            breakfast_recipe_id=menu_plan.breakfast_recipe_id,
+            lunch_recipe_id=menu_plan.lunch_recipe_id,
+            dinner_recipe_id=menu_plan.dinner_recipe_id,
+            extra_recipe_id=menu_plan.extra_recipe_id
+        )
+        db.add(new_plan)
+        db.commit()
+        db.refresh(new_plan)
+        plan = new_plan
+    
+    # Формируем ответ
+    plan_dict = {
+        "id": plan.id,
+        "date": plan.date,
+        "user_id": plan.user_id,
+        "breakfast_recipe_id": plan.breakfast_recipe_id,
+        "lunch_recipe_id": plan.lunch_recipe_id,
+        "dinner_recipe_id": plan.dinner_recipe_id,
+        "extra_recipe_id": plan.extra_recipe_id,
+        "breakfast_recipe": None,
+        "lunch_recipe": None,
+        "dinner_recipe": None,
+        "extra_recipe": None
+    }
+    
+    # Загружаем рецепты
+    if plan.breakfast_recipe:
+        avg_rating = db.query(func.avg(Review.rating)).filter(
+            Review.recipe_id == plan.breakfast_recipe.id
+        ).scalar()
+        plan_dict["breakfast_recipe"] = RecipeListItem(
+            id=plan.breakfast_recipe.id,
+            title=plan.breakfast_recipe.title,
+            category=plan.breakfast_recipe.category,
+            cook_time=plan.breakfast_recipe.cook_time,
+            servings=plan.breakfast_recipe.servings,
+            image=plan.breakfast_recipe.image,
+            calories_per_serving=plan.breakfast_recipe.calories_per_serving,
+            rating=float(avg_rating) if avg_rating else None
+        )
+    
+    if plan.lunch_recipe:
+        avg_rating = db.query(func.avg(Review.rating)).filter(
+            Review.recipe_id == plan.lunch_recipe.id
+        ).scalar()
+        plan_dict["lunch_recipe"] = RecipeListItem(
+            id=plan.lunch_recipe.id,
+            title=plan.lunch_recipe.title,
+            category=plan.lunch_recipe.category,
+            cook_time=plan.lunch_recipe.cook_time,
+            servings=plan.lunch_recipe.servings,
+            image=plan.lunch_recipe.image,
+            calories_per_serving=plan.lunch_recipe.calories_per_serving,
+            rating=float(avg_rating) if avg_rating else None
+        )
+    
+    if plan.dinner_recipe:
+        avg_rating = db.query(func.avg(Review.rating)).filter(
+            Review.recipe_id == plan.dinner_recipe.id
+        ).scalar()
+        plan_dict["dinner_recipe"] = RecipeListItem(
+            id=plan.dinner_recipe.id,
+            title=plan.dinner_recipe.title,
+            category=plan.dinner_recipe.category,
+            cook_time=plan.dinner_recipe.cook_time,
+            servings=plan.dinner_recipe.servings,
+            image=plan.dinner_recipe.image,
+            calories_per_serving=plan.dinner_recipe.calories_per_serving,
+            rating=float(avg_rating) if avg_rating else None
+        )
+    
+    if plan.extra_recipe:
+        avg_rating = db.query(func.avg(Review.rating)).filter(
+            Review.recipe_id == plan.extra_recipe.id
+        ).scalar()
+        plan_dict["extra_recipe"] = RecipeListItem(
+            id=plan.extra_recipe.id,
+            title=plan.extra_recipe.title,
+            category=plan.extra_recipe.category,
+            cook_time=plan.extra_recipe.cook_time,
+            servings=plan.extra_recipe.servings,
+            image=plan.extra_recipe.image,
+            calories_per_serving=plan.extra_recipe.calories_per_serving,
+            rating=float(avg_rating) if avg_rating else None
+        )
+    
+    return MenuPlanResponse(**plan_dict)
+
+
+@app.delete("/api/menu-plans/{plan_date}")
+async def delete_menu_plan(plan_date: date, db: Session = Depends(get_db)):
+    """Удалить меню план по дате"""
+    plan = db.query(MenuPlan).filter(MenuPlan.date == plan_date).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Menu plan not found")
+    
+    db.delete(plan)
+    db.commit()
+    
+    return {"message": "Menu plan deleted successfully"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
