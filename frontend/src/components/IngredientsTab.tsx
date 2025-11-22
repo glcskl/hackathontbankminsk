@@ -221,11 +221,6 @@ export function IngredientsTab({
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Рекомендованные рецепты</Text>
-          {sortedRecipes.length > 0 && (
-            <Text style={styles.recipesCount}>
-              Найдено: {sortedRecipes.length}
-            </Text>
-          )}
         </View>
         
         {Array.from(userIngredients.values()).filter(v => v.quantity > 0).length === 0 ? (
