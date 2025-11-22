@@ -40,8 +40,8 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://app:password@postgres:5432/vibecoders_db
       - API_URL=http://backend:8000
-      - EXPO_PUBLIC_API_URL=http://${HOST_IP:-localhost}:8000
-      - REACT_NATIVE_PACKAGER_HOSTNAME=${HOST_IP:-localhost}
+      - EXPO_PUBLIC_API_URL=http://192.168.2.1:8000
+      - REACT_NATIVE_PACKAGER_HOSTNAME=192.168.2.1
       - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
       - EXPO_USE_FAST_RESOLVER=1
     stdin_open: true
