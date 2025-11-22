@@ -16,6 +16,9 @@ class Recipe(Base):
     servings = Column(Integer, nullable=False)
     image = Column(Text, nullable=True)
     calories_per_serving = Column(Integer, nullable=True)
+    proteins_per_serving = Column(Float, nullable=True)  # Белки в граммах
+    fats_per_serving = Column(Float, nullable=True)  # Жиры в граммах
+    carbohydrates_per_serving = Column(Float, nullable=True)  # Углеводы в граммах
     rating = Column(Float, nullable=True)
     user_id = Column(String(100), nullable=True, index=True)  # Для пользовательских рецептов
     created_at = Column(DateTime, default=datetime.utcnow)

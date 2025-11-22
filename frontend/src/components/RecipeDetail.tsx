@@ -19,6 +19,7 @@ export function RecipeDetail({ recipe, onClose, userIngredients = new Map(), onA
   const [servings, setServings] = useState(recipe.servings);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
   const [currentStep, setCurrentStep] = useState(0);
+  const [showBJUModal, setShowBJUModal] = useState(false);
 
   const servingsMultiplier = servings / recipe.servings;
 
@@ -90,6 +91,9 @@ export function RecipeDetail({ recipe, onClose, userIngredients = new Map(), onA
   };
 
   const totalCalories = recipe.caloriesPerServing ? recipe.caloriesPerServing * servings : null;
+  const totalProteins = recipe.proteinsPerServing ? recipe.proteinsPerServing * servings : null;
+  const totalFats = recipe.fatsPerServing ? recipe.fatsPerServing * servings : null;
+  const totalCarbohydrates = recipe.carbohydratesPerServing ? recipe.carbohydratesPerServing * servings : null;
 
   return (
     <Modal
@@ -123,10 +127,14 @@ export function RecipeDetail({ recipe, onClose, userIngredients = new Map(), onA
                       <Text style={styles.metaText}>{recipe.category}</Text>
                     </View>
                     {totalCalories && (
-                      <View style={styles.metaItem}>
+                      <TouchableOpacity 
+                        style={styles.metaItem}
+                        onPress={() => setShowBJUModal(true)}
+                        activeOpacity={0.7}
+                      >
                         <Ionicons name="flame" size={16} color={colors.orange500} />
                         <Text style={styles.metaText}>{totalCalories} ккал</Text>
-                      </View>
+                      </TouchableOpacity>
                     )}
                   </View>
                 </View>
@@ -360,6 +368,114 @@ export function RecipeDetail({ recipe, onClose, userIngredients = new Map(), onA
           </ScrollView>
         </View>
       </View>
+
+      {/* Модальное окно с БЖУ */}
+      <Modal
+        visible={showBJUModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowBJUModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.bjuModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowBJUModal(false)}
+        >
+          <View style={styles.bjuModalContent} onStartShouldSetResponder={() => true}>
+            <View style={styles.bjuModalHeader}>
+              <View>
+                <Text style={styles.bjuModalTitle}>Пищевая ценность</Text>
+                <Text style={styles.bjuModalSubtitle}>
+                  На {servings} {servings === 1 ? 'порцию' : servings < 5 ? 'порции' : 'порций'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.bjuModalCloseButton}
+                onPress={() => setShowBJUModal(false)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.bjuGrid}>
+              <View style={styles.bjuCard}>
+                <View style={styles.bjuCardContent}>
+                  <Text style={styles.bjuValue}>
+                    {totalCalories ? totalCalories.toFixed(0) : '—'}
+                  </Text>
+                  <Text style={styles.bjuUnit}>ккал</Text>
+                </View>
+                <View style={styles.bjuIconWrapper}>
+                  <Ionicons name="flame" size={20} color={colors.orange500} />
+                </View>
+              </View>
+
+              <View style={styles.bjuCard}>
+                <View style={styles.bjuCardContent}>
+                  <Text style={styles.bjuValue}>
+                    {totalProteins ? totalProteins.toFixed(1) : '—'}
+                  </Text>
+                  <Text style={styles.bjuUnit}>Белки, г</Text>
+                </View>
+                <View style={styles.bjuIconWrapper}>
+                  <Ionicons name="fitness" size={20} color={colors.primary} />
+                </View>
+              </View>
+
+              <View style={styles.bjuCard}>
+                <View style={styles.bjuCardContent}>
+                  <Text style={styles.bjuValue}>
+                    {totalFats ? totalFats.toFixed(1) : '—'}
+                  </Text>
+                  <Text style={styles.bjuUnit}>Жиры, г</Text>
+                </View>
+                <View style={styles.bjuIconWrapper}>
+                  <Ionicons name="water" size={20} color={colors.orange500} />
+                </View>
+              </View>
+
+              <View style={styles.bjuCard}>
+                <View style={styles.bjuCardContent}>
+                  <Text style={styles.bjuValue}>
+                    {totalCarbohydrates ? totalCarbohydrates.toFixed(1) : '—'}
+                  </Text>
+                  <Text style={styles.bjuUnit}>Углеводы, г</Text>
+                </View>
+                <View style={styles.bjuIconWrapper}>
+                  <Ionicons name="leaf" size={20} color={colors.green600} />
+                </View>
+              </View>
+            </View>
+
+            {recipe.caloriesPerServing && (
+              <View style={styles.bjuPerServing}>
+                <Text style={styles.bjuPerServingLabel}>На 1 порцию</Text>
+                <View style={styles.bjuPerServingValues}>
+                  <Text style={styles.bjuPerServingValue}>
+                    {recipe.caloriesPerServing} ккал
+                  </Text>
+                  {recipe.proteinsPerServing && (
+                    <Text style={styles.bjuPerServingValue}>
+                      Б: {recipe.proteinsPerServing.toFixed(1)}г
+                    </Text>
+                  )}
+                  {recipe.fatsPerServing && (
+                    <Text style={styles.bjuPerServingValue}>
+                      Ж: {recipe.fatsPerServing.toFixed(1)}г
+                    </Text>
+                  )}
+                  {recipe.carbohydratesPerServing && (
+                    <Text style={styles.bjuPerServingValue}>
+                      У: {recipe.carbohydratesPerServing.toFixed(1)}г
+                    </Text>
+                  )}
+                </View>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </Modal>
   );
 }
@@ -797,6 +913,111 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: colors.white,
+  },
+  bjuModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  bjuModalContent: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  bjuModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  bjuModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.black,
+    marginBottom: 4,
+  },
+  bjuModalSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  bjuModalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.grayBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bjuGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 20,
+  },
+  bjuCard: {
+    flex: 1,
+    minWidth: '47%',
+    backgroundColor: colors.grayBg,
+    borderRadius: 12,
+    padding: 16,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  bjuCardContent: {
+    alignItems: 'flex-start',
+  },
+  bjuIconWrapper: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bjuValue: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.black,
+    marginBottom: 4,
+    lineHeight: 32,
+  },
+  bjuUnit: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  bjuPerServing: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray200,
+  },
+  bjuPerServingLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  bjuPerServingValues: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  bjuPerServingValue: {
+    fontSize: 13,
+    color: colors.text,
+    fontWeight: '600',
   },
 });
 

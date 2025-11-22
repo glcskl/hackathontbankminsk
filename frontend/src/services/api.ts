@@ -60,6 +60,9 @@ export interface Recipe {
   servings: number;
   image?: string;
   calories_per_serving?: number;
+  proteins_per_serving?: number;
+  fats_per_serving?: number;
+  carbohydrates_per_serving?: number;
   rating?: number;
   ingredients: Ingredient[];
   steps: Step[];
@@ -74,6 +77,9 @@ export interface RecipeListItem {
   servings: number;
   image?: string;
   calories_per_serving?: number;
+  proteins_per_serving?: number;
+  fats_per_serving?: number;
+  carbohydrates_per_serving?: number;
   rating?: number;
 }
 
@@ -117,6 +123,9 @@ export interface RecipeCreate {
   servings: number;
   image?: string;
   calories_per_serving?: number;
+  proteins_per_serving?: number;
+  fats_per_serving?: number;
+  carbohydrates_per_serving?: number;
   user_id?: string;
   ingredients: Array<{
     name: string;

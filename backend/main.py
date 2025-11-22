@@ -136,6 +136,9 @@ async def get_recipes(
             "servings": recipe.servings,
             "image": recipe.image,
             "calories_per_serving": recipe.calories_per_serving,
+            "proteins_per_serving": float(recipe.proteins_per_serving) if recipe.proteins_per_serving else None,
+            "fats_per_serving": float(recipe.fats_per_serving) if recipe.fats_per_serving else None,
+            "carbohydrates_per_serving": float(recipe.carbohydrates_per_serving) if recipe.carbohydrates_per_serving else None,
             "rating": float(avg_rating) if avg_rating else None
         }
         result.append(RecipeListItem(**recipe_dict))
@@ -157,6 +160,9 @@ async def create_recipe(
         servings=recipe.servings,
         image=recipe.image,
         calories_per_serving=recipe.calories_per_serving,
+        proteins_per_serving=recipe.proteins_per_serving,
+        fats_per_serving=recipe.fats_per_serving,
+        carbohydrates_per_serving=recipe.carbohydrates_per_serving,
         user_id=recipe.user_id
     )
     db.add(new_recipe)
@@ -196,6 +202,9 @@ async def create_recipe(
         "servings": new_recipe.servings,
         "image": new_recipe.image,
         "calories_per_serving": new_recipe.calories_per_serving,
+        "proteins_per_serving": float(new_recipe.proteins_per_serving) if new_recipe.proteins_per_serving else None,
+        "fats_per_serving": float(new_recipe.fats_per_serving) if new_recipe.fats_per_serving else None,
+        "carbohydrates_per_serving": float(new_recipe.carbohydrates_per_serving) if new_recipe.carbohydrates_per_serving else None,
         "user_id": new_recipe.user_id,
         "rating": None,
         "ingredients": new_recipe.ingredients,
@@ -243,6 +252,9 @@ async def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
         "servings": recipe.servings,
         "image": recipe.image,
         "calories_per_serving": recipe.calories_per_serving,
+        "proteins_per_serving": float(recipe.proteins_per_serving) if recipe.proteins_per_serving else None,
+        "fats_per_serving": float(recipe.fats_per_serving) if recipe.fats_per_serving else None,
+        "carbohydrates_per_serving": float(recipe.carbohydrates_per_serving) if recipe.carbohydrates_per_serving else None,
         "user_id": recipe.user_id,
         "rating": float(avg_rating) if avg_rating else None,
         "ingredients": recipe.ingredients,
@@ -337,6 +349,9 @@ async def get_menu_plans(
                 servings=plan.breakfast_recipe.servings,
                 image=plan.breakfast_recipe.image,
                 calories_per_serving=plan.breakfast_recipe.calories_per_serving,
+                proteins_per_serving=float(plan.breakfast_recipe.proteins_per_serving) if plan.breakfast_recipe.proteins_per_serving else None,
+                fats_per_serving=float(plan.breakfast_recipe.fats_per_serving) if plan.breakfast_recipe.fats_per_serving else None,
+                carbohydrates_per_serving=float(plan.breakfast_recipe.carbohydrates_per_serving) if plan.breakfast_recipe.carbohydrates_per_serving else None,
                 rating=float(avg_rating) if avg_rating else None
             )
         
@@ -352,6 +367,9 @@ async def get_menu_plans(
                 servings=plan.lunch_recipe.servings,
                 image=plan.lunch_recipe.image,
                 calories_per_serving=plan.lunch_recipe.calories_per_serving,
+                proteins_per_serving=float(plan.lunch_recipe.proteins_per_serving) if plan.lunch_recipe.proteins_per_serving else None,
+                fats_per_serving=float(plan.lunch_recipe.fats_per_serving) if plan.lunch_recipe.fats_per_serving else None,
+                carbohydrates_per_serving=float(plan.lunch_recipe.carbohydrates_per_serving) if plan.lunch_recipe.carbohydrates_per_serving else None,
                 rating=float(avg_rating) if avg_rating else None
             )
         
@@ -367,6 +385,9 @@ async def get_menu_plans(
                 servings=plan.dinner_recipe.servings,
                 image=plan.dinner_recipe.image,
                 calories_per_serving=plan.dinner_recipe.calories_per_serving,
+                proteins_per_serving=float(plan.dinner_recipe.proteins_per_serving) if plan.dinner_recipe.proteins_per_serving else None,
+                fats_per_serving=float(plan.dinner_recipe.fats_per_serving) if plan.dinner_recipe.fats_per_serving else None,
+                carbohydrates_per_serving=float(plan.dinner_recipe.carbohydrates_per_serving) if plan.dinner_recipe.carbohydrates_per_serving else None,
                 rating=float(avg_rating) if avg_rating else None
             )
         
@@ -382,6 +403,9 @@ async def get_menu_plans(
                 servings=plan.extra_recipe.servings,
                 image=plan.extra_recipe.image,
                 calories_per_serving=plan.extra_recipe.calories_per_serving,
+                proteins_per_serving=float(plan.extra_recipe.proteins_per_serving) if plan.extra_recipe.proteins_per_serving else None,
+                fats_per_serving=float(plan.extra_recipe.fats_per_serving) if plan.extra_recipe.fats_per_serving else None,
+                carbohydrates_per_serving=float(plan.extra_recipe.carbohydrates_per_serving) if plan.extra_recipe.carbohydrates_per_serving else None,
                 rating=float(avg_rating) if avg_rating else None
             )
         
@@ -399,6 +423,9 @@ async def get_menu_plans(
                 servings=additional.recipe.servings,
                 image=additional.recipe.image,
                 calories_per_serving=additional.recipe.calories_per_serving,
+                proteins_per_serving=float(additional.recipe.proteins_per_serving) if additional.recipe.proteins_per_serving else None,
+                fats_per_serving=float(additional.recipe.fats_per_serving) if additional.recipe.fats_per_serving else None,
+                carbohydrates_per_serving=float(additional.recipe.carbohydrates_per_serving) if additional.recipe.carbohydrates_per_serving else None,
                 rating=float(avg_rating) if avg_rating else None
             ))
         plan_dict["additional_recipes"] = additional_recipes
@@ -521,6 +548,9 @@ async def save_menu_plan(
             servings=plan.breakfast_recipe.servings,
             image=plan.breakfast_recipe.image,
             calories_per_serving=plan.breakfast_recipe.calories_per_serving,
+            proteins_per_serving=float(plan.breakfast_recipe.proteins_per_serving) if plan.breakfast_recipe.proteins_per_serving else None,
+            fats_per_serving=float(plan.breakfast_recipe.fats_per_serving) if plan.breakfast_recipe.fats_per_serving else None,
+            carbohydrates_per_serving=float(plan.breakfast_recipe.carbohydrates_per_serving) if plan.breakfast_recipe.carbohydrates_per_serving else None,
             rating=float(avg_rating) if avg_rating else None
         )
     
@@ -536,6 +566,9 @@ async def save_menu_plan(
             servings=plan.lunch_recipe.servings,
             image=plan.lunch_recipe.image,
             calories_per_serving=plan.lunch_recipe.calories_per_serving,
+            proteins_per_serving=float(plan.lunch_recipe.proteins_per_serving) if plan.lunch_recipe.proteins_per_serving else None,
+            fats_per_serving=float(plan.lunch_recipe.fats_per_serving) if plan.lunch_recipe.fats_per_serving else None,
+            carbohydrates_per_serving=float(plan.lunch_recipe.carbohydrates_per_serving) if plan.lunch_recipe.carbohydrates_per_serving else None,
             rating=float(avg_rating) if avg_rating else None
         )
     
@@ -551,6 +584,9 @@ async def save_menu_plan(
             servings=plan.dinner_recipe.servings,
             image=plan.dinner_recipe.image,
             calories_per_serving=plan.dinner_recipe.calories_per_serving,
+            proteins_per_serving=float(plan.dinner_recipe.proteins_per_serving) if plan.dinner_recipe.proteins_per_serving else None,
+            fats_per_serving=float(plan.dinner_recipe.fats_per_serving) if plan.dinner_recipe.fats_per_serving else None,
+            carbohydrates_per_serving=float(plan.dinner_recipe.carbohydrates_per_serving) if plan.dinner_recipe.carbohydrates_per_serving else None,
             rating=float(avg_rating) if avg_rating else None
         )
     
@@ -566,6 +602,9 @@ async def save_menu_plan(
             servings=plan.extra_recipe.servings,
             image=plan.extra_recipe.image,
             calories_per_serving=plan.extra_recipe.calories_per_serving,
+            proteins_per_serving=float(plan.extra_recipe.proteins_per_serving) if plan.extra_recipe.proteins_per_serving else None,
+            fats_per_serving=float(plan.extra_recipe.fats_per_serving) if plan.extra_recipe.fats_per_serving else None,
+            carbohydrates_per_serving=float(plan.extra_recipe.carbohydrates_per_serving) if plan.extra_recipe.carbohydrates_per_serving else None,
             rating=float(avg_rating) if avg_rating else None
         )
     
@@ -583,6 +622,9 @@ async def save_menu_plan(
             servings=additional.recipe.servings,
             image=additional.recipe.image,
             calories_per_serving=additional.recipe.calories_per_serving,
+            proteins_per_serving=float(additional.recipe.proteins_per_serving) if additional.recipe.proteins_per_serving else None,
+            fats_per_serving=float(additional.recipe.fats_per_serving) if additional.recipe.fats_per_serving else None,
+            carbohydrates_per_serving=float(additional.recipe.carbohydrates_per_serving) if additional.recipe.carbohydrates_per_serving else None,
             rating=float(avg_rating) if avg_rating else None
         ))
     plan_dict["additional_recipes"] = additional_recipes

@@ -131,6 +131,10 @@ export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPla
           const apiRecipe = await api.getRecipe(Number(recipe.id));
           fullRecipe = {
             ...recipe,
+            caloriesPerServing: apiRecipe.calories_per_serving,
+            proteinsPerServing: apiRecipe.proteins_per_serving,
+            fatsPerServing: apiRecipe.fats_per_serving,
+            carbohydratesPerServing: apiRecipe.carbohydrates_per_serving,
             ingredients: apiRecipe.ingredients.map(ing => ({
               name: ing.name,
               amount: ing.amount,
@@ -304,6 +308,10 @@ export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPla
             const apiRecipe = await api.getRecipe(Number(recipe.id));
             return {
               ...recipe,
+              caloriesPerServing: apiRecipe.calories_per_serving,
+              proteinsPerServing: apiRecipe.proteins_per_serving,
+              fatsPerServing: apiRecipe.fats_per_serving,
+              carbohydratesPerServing: apiRecipe.carbohydrates_per_serving,
               ingredients: apiRecipe.ingredients.map(ing => ({
                 name: ing.name,
                 amount: ing.amount,

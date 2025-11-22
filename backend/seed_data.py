@@ -27,6 +27,9 @@ def seed_database():
             cook_time=20,
             servings=4,
             calories_per_serving=220,
+            proteins_per_serving=7.5,
+            fats_per_serving=8.0,
+            carbohydrates_per_serving=30.0,
             image="https://images.unsplash.com/photo-1637533114107-1dc725c6e576?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYW5jYWtlcyUyMGJyZWFrZmFzdHxlbnwxfHx8fDE3NjM3NTU1Mzh8MA&ixlib=rb-4.1.0&q=80&w=1080"
         )
         db.add(recipe1)
@@ -66,6 +69,9 @@ def seed_database():
             cook_time=45,
             servings=4,
             calories_per_serving=520,
+            proteins_per_serving=28.0,
+            fats_per_serving=18.0,
+            carbohydrates_per_serving=55.0,
             image="https://images.unsplash.com/photo-1622973536968-3ead9e780960?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXN0YSUyMGJvbG9nbmVzZXxlbnwxfHx8fDE3NjM3NzI0MDl8MA&ixlib=rb-4.1.0&q=80&w=1080"
         )
         db.add(recipe2)
@@ -102,6 +108,9 @@ def seed_database():
             cook_time=15,
             servings=2,
             calories_per_serving=180,
+            proteins_per_serving=12.0,
+            fats_per_serving=12.0,
+            carbohydrates_per_serving=6.0,
             image="https://images.unsplash.com/photo-1668283653825-37b80f055b05?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxvbWVsZXR0ZSUyMGVnZ3N8ZW58MXx8fHwxNjM4MDM4NDJ8MA&ixlib=rb-4.1.0&q=80&w=1080"
         )
         db.add(recipe3)
@@ -135,6 +144,9 @@ def seed_database():
             cook_time=25,
             servings=2,
             calories_per_serving=350,
+            proteins_per_serving=35.0,
+            fats_per_serving=18.0,
+            carbohydrates_per_serving=2.0,
             image="https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmlsbGVkJTIwc2FsbW9ufGVufDF8fHx8MTc2MzcwMzYyOXww&ixlib=rb-4.1.0&q=80&w=1080"
         )
         db.add(recipe4)
@@ -167,6 +179,9 @@ def seed_database():
             cook_time=20,
             servings=2,
             calories_per_serving=380,
+            proteins_per_serving=25.0,
+            fats_per_serving=22.0,
+            carbohydrates_per_serving=15.0,
             image="https://images.unsplash.com/photo-1550304943-4f24f54ddde9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYWVzYXIlMjBzYWxhZHxlbnwxfHx8fDE3NjM3NzMyOTZ8MA&ixlib=rb-4.1.0&q=80&w=1080"
         )
         db.add(recipe5)
@@ -202,6 +217,9 @@ def seed_database():
             cook_time=60,
             servings=8,
             calories_per_serving=450,
+            proteins_per_serving=6.5,
+            fats_per_serving=22.0,
+            carbohydrates_per_serving=58.0,
             image="https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaG9jb2xhdGUlMjBjYWtlfGVufDF8fHx8MTc2MzcxMjQxOXww&ixlib=rb-4.1.0&q=80&w=1080"
         )
         db.add(recipe6)

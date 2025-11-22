@@ -72,6 +72,9 @@ class RecipeBase(BaseModel):
     servings: int
     image: Optional[str] = None
     calories_per_serving: Optional[int] = None
+    proteins_per_serving: Optional[float] = None
+    fats_per_serving: Optional[float] = None
+    carbohydrates_per_serving: Optional[float] = None
     user_id: Optional[str] = None
 
 
@@ -101,6 +104,9 @@ class RecipeListItem(BaseModel):
     servings: int
     image: Optional[str] = None
     calories_per_serving: Optional[int] = None
+    proteins_per_serving: Optional[float] = None
+    fats_per_serving: Optional[float] = None
+    carbohydrates_per_serving: Optional[float] = None
     rating: Optional[float] = None
 
     class Config:

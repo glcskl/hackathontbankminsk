@@ -32,6 +32,9 @@ export interface Recipe {
   rating?: number;
   reviews?: Review[];
   caloriesPerServing?: number;
+  proteinsPerServing?: number;
+  fatsPerServing?: number;
+  carbohydratesPerServing?: number;
 }
 
 export interface MealPlan {
