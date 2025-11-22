@@ -14,7 +14,7 @@ interface MonthlyMenuProps {
 }
 
 export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPlanChange }: MonthlyMenuProps) {
-  const [currentWeek, setCurrentWeek] = useState(0); // 0 = текущая неделя, 1 = следующая
+  const [currentWeek, setCurrentWeek] = useState(0); // 0 = текущая неделя, 1-3 = следующие недели (всего 4 недели)
   const [menuPlan, setMenuPlan] = useState<Record<string, MealPlan>>(initialMenuPlan);
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ day: string; mealType: keyof MealPlan | 'additional'; additionalIndex?: number } | null>(null);
@@ -46,25 +46,19 @@ export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPla
     mondayOfCurrentWeek.setDate(todayDate.getDate() - dayOfWeek);
     mondayOfCurrentWeek.setHours(0, 0, 0, 0);
     
-    // Текущая неделя
-    const currentWeek: Date[] = [];
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(mondayOfCurrentWeek);
-      date.setDate(mondayOfCurrentWeek.getDate() + i);
-      currentWeek.push(date);
+    // Генерируем 4 недели (текущая + 3 следующие)
+    for (let weekIndex = 0; weekIndex < 4; weekIndex++) {
+      const week: Date[] = [];
+      const mondayOfWeek = new Date(mondayOfCurrentWeek);
+      mondayOfWeek.setDate(mondayOfCurrentWeek.getDate() + (weekIndex * 7));
+      
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(mondayOfWeek);
+        date.setDate(mondayOfWeek.getDate() + i);
+        week.push(date);
+      }
+      weeks.push(week);
     }
-    weeks.push(currentWeek);
-    
-    // Следующая неделя
-    const nextWeek: Date[] = [];
-    const mondayOfNextWeek = new Date(mondayOfCurrentWeek);
-    mondayOfNextWeek.setDate(mondayOfCurrentWeek.getDate() + 7);
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(mondayOfNextWeek);
-      date.setDate(mondayOfNextWeek.getDate() + i);
-      nextWeek.push(date);
-    }
-    weeks.push(nextWeek);
     
     return weeks;
   };
@@ -403,7 +397,13 @@ export function MonthlyMenu({ recipes, menuPlan: initialMenuPlan = {}, onMenuPla
             ))}
           </View>
           <Text style={styles.weekIndicatorText}>
-            {currentWeek === 0 ? 'Текущая неделя' : 'Следующая неделя'}
+            {currentWeek === 0 
+              ? 'Текущая неделя' 
+              : currentWeek === 1 
+              ? 'Следующая неделя'
+              : currentWeek === 2
+              ? 'Через 2 недели'
+              : 'Через 3 недели'}
           </Text>
         </View>
         <TouchableOpacity
