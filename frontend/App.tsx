@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { RecipeCard } from './src/components/RecipeCard';
@@ -10,11 +10,12 @@ import { MonthlyMenu } from './src/components/MonthlyMenu';
 import { SearchBar } from './src/components/SearchBar';
 import { IngredientsTab } from './src/components/IngredientsTab';
 import { ShoppingListTab } from './src/components/ShoppingListTab';
+import { CreateRecipe } from './src/components/CreateRecipe';
 import { colors } from './src/constants/colors';
 import { Recipe, Review, MealPlan } from './src/types';
 import * as api from './src/services/api';
 
-const categories = ['Все', 'Завтрак', 'Обед', 'Ужин', 'Десерт'];
+const categories = ['Все', 'Мои рецепты', 'Завтрак', 'Обед', 'Ужин', 'Десерт'];
 
 // Адаптеры для преобразования данных между API и фронтендом
 function adaptApiRecipeToFrontend(apiRecipe: api.Recipe): Recipe {
@@ -75,6 +76,7 @@ export default function App() {
   const [menuPlan, setMenuPlan] = useState<Record<string, MealPlan>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateRecipe, setShowCreateRecipe] = useState(false);
 
   // Загрузка рецептов при монтировании и при изменении фильтров
   useEffect(() => {
@@ -123,9 +125,13 @@ export default function App() {
     try {
       setLoading(true);
       setError(null);
-      const category = activeCategory === 'Все' ? undefined : activeCategory;
+      let category = activeCategory === 'Все' ? undefined : activeCategory;
+      const userId = activeCategory === 'Мои рецепты' ? 'default' : undefined;
+      if (activeCategory === 'Мои рецепты') {
+        category = undefined;
+      }
       const search = searchQuery.trim() || undefined;
-      const apiRecipes = await api.getRecipes(category, search);
+      const apiRecipes = await api.getRecipes(category, search, userId);
       const adaptedRecipes = apiRecipes.map(adaptApiRecipeListItemToFrontend);
       setRecipes(adaptedRecipes);
     } catch (err) {
@@ -359,9 +365,18 @@ export default function App() {
               />
             </View>
 
-            <Text style={styles.recipesCount}>
-              Найдено рецептов: <Text style={styles.recipesCountBold}>{filteredRecipes.length}</Text>
-            </Text>
+            <View style={styles.headerRow}>
+              <Text style={styles.recipesCount}>
+                Найдено рецептов: <Text style={styles.recipesCountBold}>{filteredRecipes.length}</Text>
+              </Text>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => setShowCreateRecipe(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add" size={24} color={colors.black} />
+              </TouchableOpacity>
+            </View>
 
             {loading ? (
               <View style={styles.loadingContainer}>
@@ -426,6 +441,14 @@ export default function App() {
         />
       )}
 
+      <CreateRecipe
+        visible={showCreateRecipe}
+        onClose={() => setShowCreateRecipe(false)}
+        onSuccess={() => {
+          loadRecipes();
+        }}
+      />
+
       <View style={styles.bottomNavigationContainer}>
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       </View>
@@ -467,14 +490,32 @@ const styles = StyleSheet.create({
   filterContainer: {
     marginBottom: 16,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
   recipesCount: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 16,
   },
   recipesCountBold: {
     color: colors.black,
     fontWeight: '600',
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   recipesGrid: {
     flexDirection: 'row',

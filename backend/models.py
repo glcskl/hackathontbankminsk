@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, DateTime, Date, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Float, Text, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 Base = declarative_base()
@@ -17,6 +17,7 @@ class Recipe(Base):
     image = Column(Text, nullable=True)
     calories_per_serving = Column(Integer, nullable=True)
     rating = Column(Float, nullable=True)
+    user_id = Column(String(100), nullable=True, index=True)  # Для пользовательских рецептов
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -59,9 +60,8 @@ class Review(Base):
     id = Column(Integer, primary_key=True, index=True)
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
     author = Column(String(100), nullable=False)
-    rating = Column(Integer, nullable=False)  # 1-5
-    comment = Column(Text, nullable=False)
-    date = Column(String(50), nullable=False)  # Формат: "15 ноя 2024"
+    rating = Column(Integer, nullable=False)
+    comment = Column(Text, nullable=True)
     image = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -73,8 +73,8 @@ class MenuPlan(Base):
     __tablename__ = "menu_plans"
 
     id = Column(Integer, primary_key=True, index=True)
-    date = Column(Date, nullable=False, unique=True, index=True)
-    user_id = Column(String(100), nullable=True)  # Для будущего расширения
+    date = Column(String(10), nullable=False)  # Формат YYYY-MM-DD
+    user_id = Column(String(100), nullable=True, index=True)
     breakfast_recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=True)
     lunch_recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=True)
     dinner_recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=True)
@@ -87,7 +87,7 @@ class MenuPlan(Base):
     lunch_recipe = relationship("Recipe", foreign_keys=[lunch_recipe_id])
     dinner_recipe = relationship("Recipe", foreign_keys=[dinner_recipe_id])
     extra_recipe = relationship("Recipe", foreign_keys=[extra_recipe_id])
-    additional_recipes = relationship("MenuPlanAdditional", back_populates="menu_plan", cascade="all, delete-orphan", order_by="MenuPlanAdditional.order")
+    additional_recipes = relationship("MenuPlanAdditional", back_populates="menu_plan", cascade="all, delete-orphan")
 
 
 class MenuPlanAdditional(Base):
@@ -96,8 +96,6 @@ class MenuPlanAdditional(Base):
     id = Column(Integer, primary_key=True, index=True)
     menu_plan_id = Column(Integer, ForeignKey("menu_plans.id"), nullable=False)
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
-    order = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
     menu_plan = relationship("MenuPlan", back_populates="additional_recipes")
@@ -108,14 +106,12 @@ class UserIngredient(Base):
     __tablename__ = "user_ingredients"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String(100), nullable=True, default="default")  # Для будущего расширения
-    name = Column(String(255), nullable=False, index=True)
+    user_id = Column(String(100), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
     quantity = Column(Float, nullable=False, default=0)
     price = Column(Float, nullable=False, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    unit = Column(String(50), nullable=True)
 
-    # Уникальный индекс для комбинации user_id и name
     __table_args__ = (
         UniqueConstraint('user_id', 'name', name='uq_user_ingredient'),
     )
@@ -125,15 +121,11 @@ class PurchasedItem(Base):
     __tablename__ = "purchased_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String(100), nullable=True, default="default")  # Для будущего расширения
-    item_name = Column(String(255), nullable=False, index=True)
-    tab_key = Column(String(50), nullable=False)  # 'tomorrow', 'week', 'month'
+    user_id = Column(String(100), nullable=False, index=True)
+    item_name = Column(String(255), nullable=False)
+    tab_key = Column(String(50), nullable=False)  # Для группировки по вкладкам/категориям
     purchased = Column(Integer, nullable=False, default=1)  # 1 = purchased, 0 = not purchased
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Уникальный индекс для комбинации user_id, item_name и tab_key
     __table_args__ = (
         UniqueConstraint('user_id', 'item_name', 'tab_key', name='uq_purchased_item'),
     )
-

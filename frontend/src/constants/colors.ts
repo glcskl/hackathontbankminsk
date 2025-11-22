@@ -26,5 +26,6 @@ export const colors = {
   red500: '#EF4444',
   orange500: '#F97316',
   orange600: '#EA580C',
+  error: '#FF3B30',
 };
 

@@ -85,13 +85,21 @@ async def health_check():
 async def get_recipes(
     category: Optional[str] = Query(None, description="Фильтр по категории"),
     search: Optional[str] = Query(None, description="Поисковый запрос"),
+    user_id: Optional[str] = Query(None, description="Фильтр по пользователю (для 'Мои рецепты')"),
     db: Session = Depends(get_db)
 ):
     """Получить список рецептов с фильтрацией по категории и поиску"""
     query = db.query(Recipe)
     
+    # Фильтр по пользователю (для "Мои рецепты")
+    if user_id:
+        query = query.filter(Recipe.user_id == user_id)
+    else:
+        # По умолчанию показываем только общие рецепты (без user_id)
+        query = query.filter(Recipe.user_id.is_(None))
+    
     # Фильтр по категории
-    if category and category != "Все":
+    if category and category != "Все" and category != "Мои рецепты":
         query = query.filter(Recipe.category == category)
     
     # Поиск по названию или ингредиентам
@@ -135,6 +143,69 @@ async def get_recipes(
     return result
 
 
+@app.post("/api/recipes", response_model=RecipeResponse)
+async def create_recipe(
+    recipe: RecipeCreate,
+    db: Session = Depends(get_db)
+):
+    """Создать новый рецепт"""
+    # Создаем рецепт
+    new_recipe = Recipe(
+        title=recipe.title,
+        category=recipe.category,
+        cook_time=recipe.cook_time,
+        servings=recipe.servings,
+        image=recipe.image,
+        calories_per_serving=recipe.calories_per_serving,
+        user_id=recipe.user_id
+    )
+    db.add(new_recipe)
+    db.flush()  # Получаем ID нового рецепта
+    
+    # Добавляем ингредиенты
+    for idx, ing in enumerate(recipe.ingredients):
+        ingredient = Ingredient(
+            recipe_id=new_recipe.id,
+            name=ing.name,
+            amount=ing.amount,
+            unit=ing.unit,
+            order=idx
+        )
+        db.add(ingredient)
+    
+    # Добавляем шаги
+    for idx, step in enumerate(recipe.steps):
+        step_obj = Step(
+            recipe_id=new_recipe.id,
+            number=step.number,
+            instruction=step.instruction,
+            image=step.image,
+            order=idx
+        )
+        db.add(step_obj)
+    
+    db.commit()
+    db.refresh(new_recipe)
+    
+    # Формируем ответ
+    recipe_dict = {
+        "id": new_recipe.id,
+        "title": new_recipe.title,
+        "category": new_recipe.category,
+        "cook_time": new_recipe.cook_time,
+        "servings": new_recipe.servings,
+        "image": new_recipe.image,
+        "calories_per_serving": new_recipe.calories_per_serving,
+        "user_id": new_recipe.user_id,
+        "rating": None,
+        "ingredients": new_recipe.ingredients,
+        "steps": new_recipe.steps,
+        "reviews": []
+    }
+    
+    return RecipeResponse(**recipe_dict)
+
+
 @app.get("/api/recipes/{recipe_id}", response_model=RecipeResponse)
 async def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
     """Получить детали рецепта по ID"""
@@ -150,6 +221,20 @@ async def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
     # Загружаем связанные данные
     db.refresh(recipe)
     
+    # Преобразуем reviews, добавляя поле date из created_at
+    reviews_data = []
+    for review in recipe.reviews:
+        review_dict = {
+            "id": review.id,
+            "recipe_id": review.recipe_id,
+            "author": review.author,
+            "rating": review.rating,
+            "comment": review.comment,
+            "date": review.created_at.strftime("%Y-%m-%d") if review.created_at else "",
+            "image": review.image
+        }
+        reviews_data.append(review_dict)
+    
     recipe_dict = {
         "id": recipe.id,
         "title": recipe.title,
@@ -158,10 +243,11 @@ async def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
         "servings": recipe.servings,
         "image": recipe.image,
         "calories_per_serving": recipe.calories_per_serving,
+        "user_id": recipe.user_id,
         "rating": float(avg_rating) if avg_rating else None,
         "ingredients": recipe.ingredients,
         "steps": recipe.steps,
-        "reviews": recipe.reviews
+        "reviews": reviews_data
     }
     
     return RecipeResponse(**recipe_dict)
@@ -185,7 +271,6 @@ async def add_review(
         author=review.author,
         rating=review.rating,
         comment=review.comment,
-        date=review.date,
         image=review.image
     )
     
@@ -199,7 +284,7 @@ async def add_review(
         author=new_review.author,
         rating=new_review.rating,
         comment=new_review.comment,
-        date=new_review.date,
+        date=new_review.created_at.strftime("%Y-%m-%d") if new_review.created_at else "",
         image=new_review.image
     )
 

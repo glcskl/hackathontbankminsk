@@ -110,6 +110,26 @@ export interface MenuPlanCreate {
   additional_recipe_ids?: number[];
 }
 
+export interface RecipeCreate {
+  title: string;
+  category: string;
+  cook_time: number;
+  servings: number;
+  image?: string;
+  calories_per_serving?: number;
+  user_id?: string;
+  ingredients: Array<{
+    name: string;
+    amount: string;
+    unit: string;
+  }>;
+  steps: Array<{
+    number: number;
+    instruction: string;
+    image?: string;
+  }>;
+}
+
 export interface UserIngredient {
   id: number;
   user_id?: string;
@@ -156,11 +176,13 @@ async function handleResponse<T>(response: Response): Promise<T> {
  */
 export async function getRecipes(
   category?: string,
-  search?: string
+  search?: string,
+  userId?: string
 ): Promise<RecipeListItem[]> {
   const params = new URLSearchParams();
   if (category) params.append('category', category);
   if (search) params.append('search', search);
+  if (userId) params.append('user_id', userId);
   
   const url = `${API_BASE_URL}/api/recipes${params.toString() ? '?' + params.toString() : ''}`;
   const response = await fetch(url);
@@ -172,6 +194,20 @@ export async function getRecipes(
  */
 export async function getRecipe(recipeId: number): Promise<Recipe> {
   const response = await fetch(`${API_BASE_URL}/api/recipes/${recipeId}`);
+  return handleResponse<Recipe>(response);
+}
+
+/**
+ * Создать новый рецепт
+ */
+export async function createRecipe(recipe: RecipeCreate): Promise<Recipe> {
+  const response = await fetch(`${API_BASE_URL}/api/recipes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(recipe),
+  });
   return handleResponse<Recipe>(response);
 }
 

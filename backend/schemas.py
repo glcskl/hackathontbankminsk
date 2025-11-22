@@ -72,6 +72,7 @@ class RecipeBase(BaseModel):
     servings: int
     image: Optional[str] = None
     calories_per_serving: Optional[int] = None
+    user_id: Optional[str] = None
 
 
 class RecipeCreate(RecipeBase):
@@ -82,6 +83,7 @@ class RecipeCreate(RecipeBase):
 class RecipeResponse(RecipeBase):
     id: int
     rating: Optional[float] = None
+    user_id: Optional[str] = None
     ingredients: List[IngredientResponse]
     steps: List[StepResponse]
     reviews: Optional[List[ReviewResponse]] = []
