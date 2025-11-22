@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { Checkbox } from './ui/Checkbox';
@@ -221,6 +221,21 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
     }).format(price);
   };
 
+  const openEdostavkaSearch = async (itemName: string) => {
+    const encodedName = encodeURIComponent(itemName);
+    const url = `https://edostavka.by/search?query=${encodedName}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.error('Cannot open URL:', url);
+      }
+    } catch (error) {
+      console.error('Error opening URL:', error);
+    }
+  };
+
   const renderShoppingList = (list: ShoppingItem[], title: string, tabKey: string) => {
     const total = calculateTotal(list, tabKey);
     const unpurchasedCount = list.filter(item => !purchasedItems.has(`${tabKey}-${item.name}`)).length;
@@ -259,7 +274,13 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
               <TouchableOpacity
                 key={index}
                 style={[styles.item, isPurchased && styles.itemPurchased]}
-                onPress={() => togglePurchased(itemKey, item.name, tabKey)}
+                onPress={() => {
+                  if (!isPurchased) {
+                    openEdostavkaSearch(item.name);
+                  } else {
+                    togglePurchased(itemKey, item.name, tabKey);
+                  }
+                }}
                 activeOpacity={0.7}
               >
                 <View style={styles.itemContent}>
@@ -270,9 +291,14 @@ export function ShoppingListTab({ menuPlan, recipes, userIngredients }: Shopping
                   <View style={styles.itemRightContent}>
                     <View style={styles.itemHeader}>
                       <View style={styles.itemInfo}>
-                        <Text style={[styles.itemName, isPurchased && styles.itemNamePurchased]}>
-                          {item.name}
-                        </Text>
+                        <View style={styles.itemNameRow}>
+                          <Text style={[styles.itemName, isPurchased && styles.itemNamePurchased]}>
+                            {item.name}
+                          </Text>
+                          {!isPurchased && (
+                            <Ionicons name="open-outline" size={18} color={colors.primary} style={styles.linkIcon} />
+                          )}
+                        </View>
                         <Text style={[styles.itemDetails, isPurchased && styles.itemDetailsPurchased]}>
                           {item.needed.toFixed(1).replace(/\.0$/, '')} {item.unit} × {formatPrice(item.price)}
                         </Text>
@@ -461,11 +487,19 @@ const styles = StyleSheet.create({
   itemInfo: {
     flex: 1,
   },
+  itemNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
   itemName: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.black,
-    marginBottom: 4,
+  },
+  linkIcon: {
+    marginLeft: 2,
   },
   itemNamePurchased: {
     textDecorationLine: 'line-through',
