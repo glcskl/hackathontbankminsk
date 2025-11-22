@@ -281,13 +281,22 @@ export function RecipeDetail({ recipe, onClose, userIngredients = new Map(), onA
                     </View>
 
                     <View style={styles.stepContent}>
-                      {recipe.steps[currentStep]?.image && (
+                      <View style={styles.stepImageContainer}>
                         <ImageWithFallback
-                          src={recipe.steps[currentStep].image}
-                          alt={`Шаг ${currentStep + 1}`}
+                          src={recipe.steps[currentStep]?.image}
+                          alt={`Шаг ${currentStep + 1}: ${recipe.steps[currentStep]?.instruction || ''}`}
                           style={styles.stepImage}
+                          fallbackStyle={styles.stepImagePlaceholder}
                         />
-                      )}
+                        {!recipe.steps[currentStep]?.image && (
+                          <View style={styles.stepImagePlaceholderOverlay}>
+                            <Ionicons name="image-outline" size={48} color={colors.gray300} />
+                            <Text style={styles.stepImagePlaceholderText}>
+                              Изображение шага {currentStep + 1}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
 
                       <View style={styles.stepInstruction}>
                         <View style={styles.stepNumber}>
@@ -640,10 +649,40 @@ const styles = StyleSheet.create({
   stepContent: {
     gap: 16,
   },
-  stepImage: {
+  stepImageContainer: {
+    position: 'relative',
     width: '100%',
     height: 200,
     borderRadius: 12,
+    overflow: 'hidden',
+  },
+  stepImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+    backgroundColor: colors.grayBg,
+  },
+  stepImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+    backgroundColor: colors.grayBg,
+  },
+  stepImagePlaceholderOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  stepImagePlaceholderText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
   stepInstruction: {
     flexDirection: 'row',

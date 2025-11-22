@@ -6,9 +6,10 @@ const ERROR_IMG_SRC = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0
 interface ImageWithFallbackProps extends ImageProps {
   src?: string;
   alt?: string;
+  fallbackStyle?: ImageProps['style'];
 }
 
-export function ImageWithFallback({ src, alt, style, ...rest }: ImageWithFallbackProps) {
+export function ImageWithFallback({ src, alt, style, fallbackStyle, ...rest }: ImageWithFallbackProps) {
   const [didError, setDidError] = useState(false);
 
   const handleError = () => {
@@ -17,7 +18,7 @@ export function ImageWithFallback({ src, alt, style, ...rest }: ImageWithFallbac
 
   if (didError || !src) {
     return (
-      <View style={[styles.errorContainer, style]}>
+      <View style={[styles.errorContainer, fallbackStyle || style]}>
         <Image 
           source={{ uri: ERROR_IMG_SRC }} 
           style={styles.errorImage}
