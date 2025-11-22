@@ -55,15 +55,55 @@ export function TabsList({ children, className, activeTab, setActiveTab }: any) 
 
 export function TabsTrigger({ value, children, className, activeTab, setActiveTab }: any) {
   const isActive = activeTab === value;
+  
+  // Проверяем, является ли children текстом
+  const isText = typeof children === 'string';
+  
+  // Функция для клонирования элементов с правильным цветом
+  const cloneWithColor = (element: any): any => {
+    if (!element || typeof element !== 'object') return element;
+    
+    // Проверяем, является ли элемент Ionicons
+    if (element.type?.displayName === 'Ionicons' || 
+        (element.type && element.type.name === 'Ionicons') ||
+        (element.props && element.props.name)) {
+      return React.cloneElement(element, {
+        color: element.props?.color || (isActive ? colors.black : colors.textSecondary)
+      });
+    }
+    
+    // Если это View, рекурсивно обрабатываем его children
+    if (element.type === View || (element.type && element.type.displayName === 'View')) {
+      return React.cloneElement(element, {
+        children: React.Children.map(element.props.children, cloneWithColor)
+      });
+    }
+    
+    return element;
+  };
 
   return (
     <TouchableOpacity
       style={[styles.tabTrigger, isActive && styles.tabTriggerActive]}
       onPress={() => setActiveTab(value)}
     >
-      <Text style={[styles.tabTriggerText, isActive && styles.tabTriggerTextActive]}>
-        {children}
-      </Text>
+      {isText ? (
+        <Text 
+          style={[styles.tabTriggerText, isActive && styles.tabTriggerTextActive]}
+          numberOfLines={1}
+        >
+          {children}
+        </Text>
+      ) : (
+        <View style={styles.tabTriggerContent}>
+          {React.Children.map(children, (child) => {
+            if (React.isValidElement(child)) {
+              return cloneWithColor(child);
+            }
+            return child;
+          })}
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -86,19 +126,27 @@ const styles = StyleSheet.create({
   },
   tabTrigger: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 0,
   },
   tabTriggerActive: {
     backgroundColor: colors.primary,
+  },
+  tabTriggerContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   tabTriggerText: {
     fontSize: 14,
     fontWeight: '500',
     color: colors.textSecondary,
+    flexShrink: 0,
+    textAlign: 'center',
   },
   tabTriggerTextActive: {
     color: colors.black,

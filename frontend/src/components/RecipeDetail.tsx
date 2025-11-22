@@ -153,26 +153,28 @@ export function RecipeDetail({ recipe, onClose, userIngredients = new Map(), onA
                   >
                     <Ionicons name="add" size={20} color={colors.primary} />
                   </TouchableOpacity>
-                  {recipe.caloriesPerServing && (
-                    <View style={styles.caloriesBadge}>
-                      <Ionicons name="flame" size={20} color={colors.orange500} />
-                      <View>
-                        <Text style={styles.caloriesLabel}>Калорийность</Text>
-                        <Text style={styles.caloriesValue}>{recipe.caloriesPerServing} ккал/порция</Text>
-                      </View>
-                    </View>
-                  )}
                 </View>
               </View>
 
               <View style={styles.tabsContainer}>
                 <Tabs defaultValue="ingredients">
                   <TabsList>
-                    <TabsTrigger value="ingredients">Ингредиенты</TabsTrigger>
-                    <TabsTrigger value="shopping">
-                      Купить {missingIngredients.length > 0 && `(${missingIngredients.length})`}
+                    <TabsTrigger value="ingredients">
+                      <Ionicons name="list" size={22} />
                     </TabsTrigger>
-                    <TabsTrigger value="steps">Приготовление</TabsTrigger>
+                    <TabsTrigger value="shopping">
+                      <View style={styles.tabIconContainer}>
+                        <Ionicons name="cart" size={22} />
+                        {missingIngredients.length > 0 && (
+                          <View style={styles.tabBadge}>
+                            <Text style={styles.tabBadgeText}>{missingIngredients.length}</Text>
+                          </View>
+                        )}
+                      </View>
+                    </TabsTrigger>
+                    <TabsTrigger value="steps">
+                      <Ionicons name="restaurant" size={22} />
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="ingredients">
@@ -456,10 +458,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.black,
     marginBottom: 12,
+    textAlign: 'center',
   },
   servingsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 12,
   },
   servingsButton: {
@@ -761,6 +765,30 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: colors.primary,
     borderRadius: 4,
+  },
+  tabIconContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    backgroundColor: colors.orange500,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  tabBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.white,
   },
 });
 

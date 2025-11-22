@@ -45,10 +45,10 @@ def seed_database():
         
         steps1 = [
             Step(recipe_id=recipe1.id, number=1, instruction="В большой миске смешайте муку, сахар, разрыхлитель и соль.", image="https://images.unsplash.com/photo-1551185618-07fd482ff86e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtaXhpbmclMjBmbG91ciUyMGluZ3JlZGllbnRzfGVufDF8fHx8MTc2MzgwNzY4MXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", order=0),
-            Step(recipe_id=recipe1.id, number=2, instruction="В отдельной миске взбейте яйца с молоком.", order=1),
-            Step(recipe_id=recipe1.id, number=3, instruction="Растопите сливочное масло и дайте ему немного остыть.", order=2),
-            Step(recipe_id=recipe1.id, number=4, instruction="Смешайте жидкие ингредиенты с сухими, добавьте растопленное масло. Не перемешивайте слишком долго - небольшие комочки допустимы.", order=3),
-            Step(recipe_id=recipe1.id, number=5, instruction="Разогрейте сковороду на среднем огне, слегка смажьте маслом.", order=4),
+            Step(recipe_id=recipe1.id, number=2, instruction="В отдельной миске взбейте яйца с молоком.", image="https://images.unsplash.com/photo-1609501676725-7186f70a7d28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=1),
+            Step(recipe_id=recipe1.id, number=3, instruction="Растопите сливочное масло и дайте ему немного остыть.", image="https://images.unsplash.com/photo-1609501676725-7186f70a7d28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=2),
+            Step(recipe_id=recipe1.id, number=4, instruction="Смешайте жидкие ингредиенты с сухими, добавьте растопленное масло. Не перемешивайте слишком долго - небольшие комочки допустимы.", image="https://images.unsplash.com/photo-1551185618-07fd482ff86e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=3),
+            Step(recipe_id=recipe1.id, number=5, instruction="Разогрейте сковороду на среднем огне, слегка смажьте маслом.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=4),
             Step(recipe_id=recipe1.id, number=6, instruction="Выливайте тесто порциями и жарьте до появления пузырьков на поверхности, затем переверните и жарьте еще 1-2 минуты.", image="https://images.unsplash.com/photo-1740836257337-0d4fd26db36b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYW5jYWtlcyUyMGNvb2tpbmclMjBwcm9jZXNzfGVufDF8fHx8MTc2MzgwNzY4MXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", order=5),
         ]
         db.add_all(steps1)
@@ -86,12 +86,12 @@ def seed_database():
         db.add_all(ingredients2)
         
         steps2 = [
-            Step(recipe_id=recipe2.id, number=1, instruction="Мелко нарежьте лук, морковь и чеснок.", order=0),
-            Step(recipe_id=recipe2.id, number=2, instruction="Разогрейте оливковое масло в большой сковороде, обжарьте лук до прозрачности.", order=1),
-            Step(recipe_id=recipe2.id, number=3, instruction="Добавьте морковь и чеснок, жарьте еще 3 минуты.", order=2),
-            Step(recipe_id=recipe2.id, number=4, instruction="Добавьте фарш, разбивая комочки. Жарьте до румяности около 10 минут.", order=3),
+            Step(recipe_id=recipe2.id, number=1, instruction="Мелко нарежьте лук, морковь и чеснок.", image="https://images.unsplash.com/photo-1518977822534-7049a61ee0c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=0),
+            Step(recipe_id=recipe2.id, number=2, instruction="Разогрейте оливковое масло в большой сковороде, обжарьте лук до прозрачности.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=1),
+            Step(recipe_id=recipe2.id, number=3, instruction="Добавьте морковь и чеснок, жарьте еще 3 минуты.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=2),
+            Step(recipe_id=recipe2.id, number=4, instruction="Добавьте фарш, разбивая комочки. Жарьте до румяности около 10 минут.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=3),
             Step(recipe_id=recipe2.id, number=5, instruction="Добавьте томаты, томатную пасту, базилик, соль и перец. Тушите на медленном огне 20-25 минут.", image="https://images.unsplash.com/photo-1612078960243-177e68303e7e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb29raW5nJTIwcGFzdElMjBzYXVjZXxlbnwxfHx8fDE3NjM4MDc2ODF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", order=4),
-            Step(recipe_id=recipe2.id, number=6, instruction="Отварите спагетти согласно инструкции на упаковке. Смешайте с соусом и подавайте.", order=5),
+            Step(recipe_id=recipe2.id, number=6, instruction="Отварите спагетти согласно инструкции на упаковке. Смешайте с соусом и подавайте.", image="https://images.unsplash.com/photo-1622973536968-3ead9e780960?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=5),
         ]
         db.add_all(steps2)
         
@@ -119,12 +119,12 @@ def seed_database():
         db.add_all(ingredients3)
         
         steps3 = [
-            Step(recipe_id=recipe3.id, number=1, instruction="Нарежьте перец и помидор кубиками, зеленый лук мелко нашинкуйте.", order=0),
-            Step(recipe_id=recipe3.id, number=2, instruction="Взбейте яйца с молоком, солью и перцем до однородности.", order=1),
-            Step(recipe_id=recipe3.id, number=3, instruction="Растопите масло на сковороде, обжарьте перец 2-3 минуты.", order=2),
-            Step(recipe_id=recipe3.id, number=4, instruction="Добавьте помидор, жарьте еще 1 минуту.", order=3),
-            Step(recipe_id=recipe3.id, number=5, instruction="Залейте овощи яичной смесью, посыпьте зеленым луком.", order=4),
-            Step(recipe_id=recipe3.id, number=6, instruction="Готовьте на среднем огне под крышкой 5-7 минут до готовности.", order=5),
+            Step(recipe_id=recipe3.id, number=1, instruction="Нарежьте перец и помидор кубиками, зеленый лук мелко нашинкуйте.", image="https://images.unsplash.com/photo-1518977822534-7049a61ee0c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=0),
+            Step(recipe_id=recipe3.id, number=2, instruction="Взбейте яйца с молоком, солью и перцем до однородности.", image="https://images.unsplash.com/photo-1609501676725-7186f70a7d28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=1),
+            Step(recipe_id=recipe3.id, number=3, instruction="Растопите масло на сковороде, обжарьте перец 2-3 минуты.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=2),
+            Step(recipe_id=recipe3.id, number=4, instruction="Добавьте помидор, жарьте еще 1 минуту.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=3),
+            Step(recipe_id=recipe3.id, number=5, instruction="Залейте овощи яичной смесью, посыпьте зеленым луком.", image="https://images.unsplash.com/photo-1668283653825-37b80f055b05?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=4),
+            Step(recipe_id=recipe3.id, number=6, instruction="Готовьте на среднем огне под крышкой 5-7 минут до готовности.", image="https://images.unsplash.com/photo-1668283653825-37b80f055b05?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=5),
         ]
         db.add_all(steps3)
         
@@ -151,12 +151,12 @@ def seed_database():
         db.add_all(ingredients4)
         
         steps4 = [
-            Step(recipe_id=recipe4.id, number=1, instruction="Смешайте оливковое масло, сок половины лимона, измельченный чеснок, соль и перец.", order=0),
-            Step(recipe_id=recipe4.id, number=2, instruction="Замаринуйте филе лосося в этой смеси на 15 минут.", order=1),
-            Step(recipe_id=recipe4.id, number=3, instruction="Разогрейте гриль или сковороду-гриль на среднем огне.", order=2),
+            Step(recipe_id=recipe4.id, number=1, instruction="Смешайте оливковое масло, сок половины лимона, измельченный чеснок, соль и перец.", image="https://images.unsplash.com/photo-1551185618-07fd482ff86e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=0),
+            Step(recipe_id=recipe4.id, number=2, instruction="Замаринуйте филе лосося в этой смеси на 15 минут.", image="https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=1),
+            Step(recipe_id=recipe4.id, number=3, instruction="Разогрейте гриль или сковороду-гриль на среднем огне.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=2),
             Step(recipe_id=recipe4.id, number=4, instruction="Выложите лосось кожей вниз и жарьте 4-5 минут.", image="https://images.unsplash.com/photo-1589236103748-2077d3435dbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmlsbGVkJTIwc2FsbW9uJTIwY29va2luZ3xlbnwxfHx8fDE3NjM4MDc2ODJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral", order=3),
-            Step(recipe_id=recipe4.id, number=5, instruction="Переверните и жарьте еще 3-4 минуты до готовности.", order=4),
-            Step(recipe_id=recipe4.id, number=6, instruction="Подавайте с дольками лимона и свежим укропом.", order=5),
+            Step(recipe_id=recipe4.id, number=5, instruction="Переверните и жарьте еще 3-4 минуты до готовности.", image="https://images.unsplash.com/photo-1589236103748-2077d3435dbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=4),
+            Step(recipe_id=recipe4.id, number=6, instruction="Подавайте с дольками лимона и свежим укропом.", image="https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=5),
         ]
         db.add_all(steps4)
         
@@ -186,12 +186,12 @@ def seed_database():
         db.add_all(ingredients5)
         
         steps5 = [
-            Step(recipe_id=recipe5.id, number=1, instruction="Обжарьте куриное филе до готовности, нарежьте кубиками.", order=0),
-            Step(recipe_id=recipe5.id, number=2, instruction="Нарежьте хлеб кубиками, смешайте с измельченным чесноком и оливковым маслом.", order=1),
-            Step(recipe_id=recipe5.id, number=3, instruction="Обжарьте хлеб до золотистых сухариков.", order=2),
-            Step(recipe_id=recipe5.id, number=4, instruction="Приготовьте соус: смешайте майонез, горчицу, лимонный сок и измельченный чеснок.", order=3),
-            Step(recipe_id=recipe5.id, number=5, instruction="Порвите салат руками, добавьте курицу и сухарики.", order=4),
-            Step(recipe_id=recipe5.id, number=6, instruction="Заправьте соусом, посыпьте тертым пармезаном и подавайте.", order=5),
+            Step(recipe_id=recipe5.id, number=1, instruction="Обжарьте куриное филе до готовности, нарежьте кубиками.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=0),
+            Step(recipe_id=recipe5.id, number=2, instruction="Нарежьте хлеб кубиками, смешайте с измельченным чесноком и оливковым маслом.", image="https://images.unsplash.com/photo-1518977822534-7049a61ee0c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=1),
+            Step(recipe_id=recipe5.id, number=3, instruction="Обжарьте хлеб до золотистых сухариков.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=2),
+            Step(recipe_id=recipe5.id, number=4, instruction="Приготовьте соус: смешайте майонез, горчицу, лимонный сок и измельченный чеснок.", image="https://images.unsplash.com/photo-1551185618-07fd482ff86e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=3),
+            Step(recipe_id=recipe5.id, number=5, instruction="Порвите салат руками, добавьте курицу и сухарики.", image="https://images.unsplash.com/photo-1550304943-4f24f54ddde9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=4),
+            Step(recipe_id=recipe5.id, number=6, instruction="Заправьте соусом, посыпьте тертым пармезаном и подавайте.", image="https://images.unsplash.com/photo-1550304943-4f24f54ddde9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=5),
         ]
         db.add_all(steps5)
         
@@ -222,12 +222,12 @@ def seed_database():
         db.add_all(ingredients6)
         
         steps6 = [
-            Step(recipe_id=recipe6.id, number=1, instruction="Разогрейте духовку до 180°C. Смажьте форму маслом.", order=0),
-            Step(recipe_id=recipe6.id, number=2, instruction="Смешайте муку, какао, разрыхлитель и половину сахара.", order=1),
-            Step(recipe_id=recipe6.id, number=3, instruction="Взбейте яйца с оставшимся сахаром до пышности.", order=2),
-            Step(recipe_id=recipe6.id, number=4, instruction="Добавьте молоко, масло и ванильный экстракт к яйцам.", order=3),
-            Step(recipe_id=recipe6.id, number=5, instruction="Соедините жидкие и сухие ингредиенты, перемешайте до однородности.", order=4),
-            Step(recipe_id=recipe6.id, number=6, instruction="Выпекайте 30-35 минут. Для глазури растопите шоколад со сливками, охладите и покройте остывший торт.", order=5),
+            Step(recipe_id=recipe6.id, number=1, instruction="Разогрейте духовку до 180°C. Смажьте форму маслом.", image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=0),
+            Step(recipe_id=recipe6.id, number=2, instruction="Смешайте муку, какао, разрыхлитель и половину сахара.", image="https://images.unsplash.com/photo-1551185618-07fd482ff86e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=1),
+            Step(recipe_id=recipe6.id, number=3, instruction="Взбейте яйца с оставшимся сахаром до пышности.", image="https://images.unsplash.com/photo-1609501676725-7186f70a7d28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=2),
+            Step(recipe_id=recipe6.id, number=4, instruction="Добавьте молоко, масло и ванильный экстракт к яйцам.", image="https://images.unsplash.com/photo-1609501676725-7186f70a7d28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=3),
+            Step(recipe_id=recipe6.id, number=5, instruction="Соедините жидкие и сухие ингредиенты, перемешайте до однородности.", image="https://images.unsplash.com/photo-1551185618-07fd482ff86e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=4),
+            Step(recipe_id=recipe6.id, number=6, instruction="Выпекайте 30-35 минут. Для глазури растопите шоколад со сливками, охладите и покройте остывший торт.", image="https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080", order=5),
         ]
         db.add_all(steps6)
         
