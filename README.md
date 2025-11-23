@@ -60,26 +60,18 @@ cd vibecoders-solution
 
 # Запустить все сервисы
 docker-compose up --build
+
+Сканировать qr в консоле через expo go.
 ```
 
 ### Автоматическое определение IP адреса
 
-Для корректной работы Expo с мобильными устройствами необходимо правильно настроить IP адрес хоста. Проект включает скрипты для автоматического определения IP:
+Для корректной работы Expo с мобильными устройствами необходимо правильно настроить IP адрес хоста.
 
-**Bash/Zsh:**
+**Ручная установка IP находится в docker-compose.yaml**
 ```bash
-./docker-up.sh up --build
-```
-
-**Fish shell:**
-```fish
-./docker-up.fish up --build
-```
-
-**Ручная установка IP (если автоматическое определение не работает):**
-```bash
-export HOST_IP=your.ip.address.here
-docker-compose up --build
+    - EXPO_PUBLIC_API_URL=http://192.168.2.1:8000
+    - REACT_NATIVE_PACKAGER_HOSTNAME=192.168.2.1
 ```
 
 ### Доступ к сервисам
